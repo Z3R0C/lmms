@@ -63,6 +63,7 @@
 #define USE_WS_PREFIX
 #include <windows.h>
 
+#include <algorithm>
 #include <vector>
 #include <queue>
 #include <string>
@@ -394,8 +395,8 @@ private:
 	// host to plugin synchronisation data structure
 	struct in
 	{
-		float lastppqPos;
-		float m_Timestamp;
+		double lastppqPos;
+		double m_Timestamp;
 		int32_t m_lastFlags;
 	} ;
 
@@ -899,6 +900,14 @@ void RemoteVstPlugin::process( const sampleFrame * _in, sampleFrame * _out )
 #define MIDI_EVENT_BUFFER_COUNT		1024
 		static char eventsBuffer[sizeof( VstEvents ) + sizeof( VstMidiEvent * ) * MIDI_EVENT_BUFFER_COUNT];
 		static VstMidiEvent vme[MIDI_EVENT_BUFFER_COUNT];
+
+		// first sort events chronologically, since some plugins
+		// (e.g. Sinnah) can hang if they're out of order
+		std::stable_sort( m_midiEvents.begin(), m_midiEvents.end(),
+				[]( const VstMidiEvent &a, const VstMidiEvent &b )
+				{
+					return a.deltaFrames < b.deltaFrames;
+				} );
 
 		VstEvents* events = (VstEvents *) eventsBuffer;
 		events->reserved = 0;
@@ -1596,10 +1605,20 @@ intptr_t RemoteVstPlugin::hostCallback( AEffect * _effect, int32_t _opcode,
 			}
 			else if( __plugin->m_vstSyncData->isPlaying )
 			{
-				__plugin->m_in->lastppqPos += (
-							__plugin->m_vstSyncData->hasSHM ?
-							__plugin->m_vstSyncData->m_bpm :
-							__plugin->m_bpm ) / (float)10340;
+				if( __plugin->m_vstSyncData->hasSHM )
+				{
+					__plugin->m_in->lastppqPos +=
+						__plugin->m_vstSyncData->m_bpm / 60.0
+						* __plugin->m_vstSyncData->m_bufferSize
+						/ __plugin->m_vstSyncData->m_sampleRate;
+				}
+				else
+				{
+					__plugin->m_in->lastppqPos +=
+						__plugin->m_bpm / 60.0
+						* __plugin->bufferSize()
+						/ __plugin->sampleRate();
+				}
 				_timeInfo.ppqPos = __plugin->m_in->lastppqPos;
 			}
 //			_timeInfo.ppqPos = __plugin->m_vstSyncData->ppqPos;
