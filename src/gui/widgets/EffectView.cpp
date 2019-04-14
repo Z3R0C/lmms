@@ -41,6 +41,7 @@
 #include "MainWindow.h"
 #include "TempoSyncKnob.h"
 #include "ToolTip.h"
+#include "PixmapButton.h"
 
 
 EffectView::EffectView( Effect * _model, QWidget * _parent ) :
@@ -65,25 +66,25 @@ EffectView::EffectView( Effect * _model, QWidget * _parent ) :
 	m_wetDry->move( 25, 5 );
 	m_wetDry->setEnabled( isEnabled );
 	m_wetDry->setHintText( tr( "Wet Level:" ), "" );
-		
-		
+
+
 	m_pan = new Knob( knobBright_26, this );
 	m_pan->setLabel( tr( "PAN" ) );
-	m_pan->move( 56, 5 );
+	m_pan->move( 60, 5 );
 	m_pan->setEnabled( isEnabled );
 	m_pan->setHintText( tr( "Panning:" ), "%" );
 
 
 	m_autoQuit = new TempoSyncKnob( knobBright_26, this );
 	m_autoQuit->setLabel( tr( "DECAY" ) );
-	m_autoQuit->move( 85, 5 );
+	m_autoQuit->move( 95, 5 );
 	m_autoQuit->setEnabled( isEnabled && !effect()->m_autoQuitDisabled );
 	m_autoQuit->setHintText( tr( "Time:" ), "ms" );
 
 
 	m_gate = new Knob( knobBright_26, this );
 	m_gate->setLabel( tr( "GATE" ) );
-	m_gate->move( 118, 5 );
+	m_gate->move( 130, 5 );
 	m_gate->setEnabled( isEnabled && !effect()->m_autoQuitDisabled );
 	m_gate->setHintText( tr( "Gate:" ), "" );
 
@@ -92,11 +93,11 @@ EffectView::EffectView( Effect * _model, QWidget * _parent ) :
 
 	if( effect()->controls()->controlCount() > 0 )
 	{
-		QPushButton * ctls_btn = new QPushButton( tr( "Controls" ),
-									this );
-		QFont f = ctls_btn->font();
-		ctls_btn->setFont( pointSize<8>( f ) );
-		ctls_btn->setGeometry( 152, 14, 50, 20 );
+		PixmapButton * ctls_btn = new PixmapButton( this, NULL );
+		ctls_btn->move(184, 7);
+		ctls_btn->setActiveGraphic(embed::getIconPixmap("trackop"));
+		ctls_btn->setInactiveGraphic(embed::getIconPixmap("trackop"));
+		ToolTip::add(ctls_btn, tr("Open controls window"));
 		connect( ctls_btn, SIGNAL( clicked() ),
 					this, SLOT( editControls() ) );
 
