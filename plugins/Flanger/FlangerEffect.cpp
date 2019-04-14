@@ -90,8 +90,8 @@ bool FlangerEffect::processAudioBuffer( sampleFrame *buf, const fpp_t frames )
 		return( false );
 	}
 	double outSum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 	const float length = m_flangerControls.m_delayTimeModel.value() * Engine::mixer()->processingSampleRate();
 	const float noise = m_flangerControls.m_whiteNoiseAmountModel.value();
 	float amplitude = m_flangerControls.m_lfoAmountModel.value() * Engine::mixer()->processingSampleRate();

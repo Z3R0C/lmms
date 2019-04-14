@@ -81,8 +81,8 @@ bool DualFilterEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames 
 	}
 
 	double outSum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 
     if( m_dfControls.m_filter1Model.isValueChanged() || m_filter1changed )
 	{

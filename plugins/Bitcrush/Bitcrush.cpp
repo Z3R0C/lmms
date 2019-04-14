@@ -219,8 +219,8 @@ bool BitcrushEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames )
 	// now downsample and write it back to main buffer
 	
 	double outSum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 	for( int f = 0; f < frames; ++f )
 	{
 		float lsum = 0.0f;

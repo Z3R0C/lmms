@@ -95,8 +95,8 @@ bool stereoEnhancerEffect::processAudioBuffer( sampleFrame * _buf,
 		return( false );
 	}
 
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 
 	for( fpp_t f = 0; f < _frames; ++f )
 	{

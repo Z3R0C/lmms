@@ -81,8 +81,8 @@ bool stereoMatrixEffect::processAudioBuffer( sampleFrame * _buf,
 
 	for( fpp_t f = 0; f < _frames; ++f )
 	{	
-		const float d = dryLevel();
-		const float w = wetLevel();
+		const float d [2] = {dryLevelL(),dryLevelR()};
+		const float w [2] = {wetLevelL(),wetLevelR()};
 		
 		sample_t l = _buf[f][0];
 		sample_t r = _buf[f][1];

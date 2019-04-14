@@ -104,8 +104,8 @@ bool dynProcEffect::processAudioBuffer( sampleFrame * _buf,
 	float gain;
 
 	double out_sum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 	
 	const int stereoMode = m_dpControls.m_stereomodeModel.value();
 	const float inputGain = m_dpControls.m_inputModel.value();

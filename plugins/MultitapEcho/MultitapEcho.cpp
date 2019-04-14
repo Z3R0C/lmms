@@ -97,8 +97,8 @@ bool MultitapEchoEffect::processAudioBuffer( sampleFrame * buf, const fpp_t fram
 	}
 	
 	double outSum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 
 	// get processing vars
 	const int steps = m_controls.m_steps.value();

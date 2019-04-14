@@ -186,8 +186,8 @@ bool CrossoverEQEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames
 		}
 	}
 	
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 	double outSum = 0.0;
 	for( int f = 0; f < frames; ++f )
 	{

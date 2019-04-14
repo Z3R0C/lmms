@@ -81,8 +81,8 @@ bool waveShaperEffect::processAudioBuffer( sampleFrame * _buf,
 	int i = 0;
 
 	double out_sum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 	float input = m_wsControls.m_inputModel.value();
 	float output = m_wsControls.m_outputModel.value();
 	const float * samples = m_wsControls.m_wavegraphModel.samples();
