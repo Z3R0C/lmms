@@ -1,0 +1,49 @@
+Input Mod -> Mod Amount -> Mod Curve -> Signal -> Combination Mode -> Secondary Input Mod -> Secondary Mod Amount -> Secondary Mod Curve
+
+Tab -> Input Mod -> Number
+
+Input:
+Main: 1-8
+Sub: 1-32
+
+Sub oscillators: Volume, Phase, Phase Randomness, Detune, Enabled, Muted, Sample Length, Noise, Keytracking, and Panning
+
+
+
+
+
+Filters: Input Volume, Filter Type, Slope, Cutoff Frequency, Resonance, db Gain, Saturation, Wet/Dry, Balance (Panning), Output Volume
+
+Make sure you add Attack and Release knobs to the mod matrix so an input follower is possible
+
+Also allow modulation of values depending on note velocity
+
+Remember to add tempo sync
+
+
+
+
+1. Keep array(s) of changed values
+2. Calculate new variable value before use
+3. Use valueChanged to change the values back
+
+
+
+
+$$$ 1. Clone arrays and send to bSynth initialization
+$$$ 2. Send all knob changes to the same array
+3. Send array changes to a vector
+4. Keep track of how many notes are being played
+5. Every sample, replace the values with those stored in the vector
+6. After <number of notes playing> (may need to be adjusted depending on tempo and buffer size) samples pass since a knob change, remove that change record from the vector
+
+
+
+
+Remember to remove "m_" from many things when done
+
+
+
+
+
+Squarify by crossfading both sides of the waveform with the other side multiplied by -1.

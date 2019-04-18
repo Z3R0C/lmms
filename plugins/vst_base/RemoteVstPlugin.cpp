@@ -899,6 +899,7 @@ bool RemoteVstPlugin::load( const std::string & _plugin_file )
 
 void RemoteVstPlugin::process( const sampleFrame * _in, sampleFrame * _out )
 {
+	cerr << "in: " << _in << " out: " << _out << " size: " << bufferSize() << " in count: " << inputCount() << " out count: " << outputCount() << endl;
 	// first we gonna post all MIDI-events we enqueued so far
 	if( m_midiEvents.size() )
 	{
@@ -949,11 +950,13 @@ void RemoteVstPlugin::process( const sampleFrame * _in, sampleFrame * _out )
 	for( int i = 0; i < inputCount(); ++i )
 	{
 		m_inputs[i] = &((float *) _in)[i * bufferSize()];
+		cerr << "clearing output buffers" << endl;
 	}
 
 	for( int i = 0; i < outputCount(); ++i )
 	{
 		m_outputs[i] = &((float *) _out)[i * bufferSize()];
+		cerr << "processing" << endl;
 		memset( m_outputs[i], 0, bufferSize() * sizeof( float ) );
 	}
 
@@ -969,6 +972,7 @@ void RemoteVstPlugin::process( const sampleFrame * _in, sampleFrame * _out )
 	{
 		m_plugin->process( m_plugin, m_inputs, m_outputs,
 								bufferSize() );
+		cerr << "done" << endl;
 	}
 #endif
 

@@ -1,0 +1,111 @@
+Now is the time to give Microwave recommendations.
+
+As soon as I have the GUI set up, it'll get harder and harder to add new things.  **PLEASE** give your crazy ideas, even if they seem absolutely stupid, or even impossible.
+
+For those who don’t know what Microwave is, here is a short video demo showing one wavetable (you can load any wavetable you want, not just this one, obviously), plus just a few features: https://www.youtube.com/watch?v=h-_7RO8WLTE
+
+Here is the list of things I have, or plan to add (a ✯ shows something that has not been completed yet, I will update this as I go):
+
+1. Main oscillator tab
+- Eight (✯) possible oscillators, each with their own wavetables and knob settings.  1024 samples per waveform, 256 waveforms, but with infinite *realtime* crossfading between waveforms
+- A Morph knob to move between waveforms, and a Range knob to average together nearby waveforms in the wavetable
+- A modify knob, with many modify modes for cool ways to change your wavetable realtime (give me ideas for these if you have a useful/unique one)
+- Up to 32 voices of unison, allowing different values of detune, phase, morph, and ✯modify for each voice
+- Phase shifting and randomization
+- Knob for changing the number of samples used per waveform (not realtime unless you guys bug me enough)
+✯ Can be modulated with any other voice, or any sound from the noise or sub oscillators, or the sample tab.
+✯ Can be copy/pasted to other oscillators
+
+2. Step sequencing tab
+- 32 drawable step sequencers that can change many values in deliciously rhythmic ways
+- Length, step number, ✯attack, ✯decay, and ✯humanizing knobs
+✯ Can be copy/pasted
+
+3. Envelope tab
+- 32 drawable envelopes that can change pretty much any value you would want to (I'll buff it to 64 if you complain enough)
+- Length knob, possibly some ✯humanizing and ✯interpolation in the future
+✯ Can be copy/pasted
+
+
+
+
+4. LFO tab
+- Identical to Envelope tab, except... it's an LFO…
+
+5. Sub oscillator tab
+✯ I intend for Microwave to come with some delicious-sounding sub waveforms that can be loaded here.
+- Any waveform can be both drawn and loaded here, regardless of whether it'll be used as a sub.
+- 32 oscillators
+- It's a great CPU-friendly alternative to the normal oscillators when only a single waveform is required instead of a full wavetable.
+
+6. Noise oscillator tab
+- You can draw on the graph to change the noise flavor.  It is generated realtime in a super CPU-friendly way.  I may decide to allow modify modes to apply to this graph as well.
+- I'll only have one oscillator for this unless you guys get really annoying about it.
+- Comes with chocolate and vanilla plus swirl.
+
+7. ✯Sample tab
+- I'm not sure how many of these I'll add, it'll likely be just one unless you complain to me enough.
+- Think of it as an equivalent to Serum's Noise tab, despite this not being specifically for noise.
+- You may choose to either loop this or play it once per note.
+- There will be a maximum length of the sound, and it will be stored within Microwave.  This is more meant for looping sounds than anything else.  If you want to play a full sample, just use AudioFileProcessor or something, haha.  It pretty much takes a sound sample and converts it into an oscillator with a very long waveform.
+- I will add a single 1-knob no-click protection, so you can prevent the sample from clicking when it loops by whatever amount you choose.
+
+8. ✯Wavetable editing tab
+- I have absolutely no idea how I'm going to implement this.  It would be very easy to allow you to simply free draw your own waveforms and use those, but as soon as you want to use various shape drawing tools in your waveforms like Serum, things get complicated.  If there are any features for this bit that are an absolutely must-have regardless of complexity to make, please tell me.
+
+9. ✯Filter tab?
+- I'll add this if I can figure out how to make a filter, haha.  We'll see.
+
+
+
+
+
+
+10. ✯Effects tab
+- I'll only be adding effects here that would benefit (either functionally or CPU-wise) from being embedded into Microwave.  Effect ideas would be good, because while I'd like to keep most of the effect functionality in LMMS rather than Microwave specifically, putting effects inside of Microwave will allow those effects to communicate with other knobs and things in Microwave in weird, unique, and awesome ways.  If you can think of any effect ideas that would fit in that category, DEFINITELY tell me about it.
+
+11. ✯Misc tab
+- This will have all the random options that don't fit anywhere else, including many options that will help you use Microwave with a weaker computer.  
+
+12. ✯Humanizer tab
+- Allows subtle (or not) randomizing of many values for a more natural sound, with a drawable probability curve.
+
+
+FAQ:
+
+Q: Is Microwave a VST, or embedded into LMMS?
+
+A: Microwave is embedded into LMMS.  It will be 100% native, which means projects using Microwave can easily and effortlessly be sent around without any extra software.
+
+
+
+Q: But what about the samples?  Wouldn't the other person you send the project to need the samples you loaded to be able to load that Microwave instrument?
+
+A: Everything in Microwave, including the wavetables, the samples, oscillators, etc., will be loaded and kept in Microwave.  It is not dependent on any external files (unlike AudioFileProcessor), so no matter what you do, you should be able to send it to your partners with no extra hassle whatsoever.  And yes, this means you can save presets with them as well.
+
+
+
+Q: Will the LMMS-native ENVs, LFOs, and filters be disabled?
+
+A: No.  They will be fully functional.
+
+
+
+
+
+Q: This seems like a very complicated synthesizer.  My computer is rather weak.  What do I do?
+
+A: As one who had to suffer with a computer almost as old as me that was thrown together using various parts in my grandmother's basement, I empathize.  I have put a lot of priority into allowing this synthesizer to run as quickly as it can without igniting your computer.  There are some things that will cause CPU problems that can't be avoided (e.g. using many unison voices), but I have tried to optimize it the best I can.  I will also add some options in the Misc tab that will allow you to find the balance you need between quality and performance.  There are a few in there you may appreciate that will only cause a minor quality difference while drastically increasing performance (one example, disabling realtime crossfading between waveforms).  If you weren't blessed with a supercomputer at birth, don't worry, I got your back <3
+
+
+
+Q: But you're... Douglas.  Aren't you supposed to... be... um...
+
+A: Yes.  I think.  I'm just as confused as you are.
+
+
+
+I need ideas for new tabs and for new features for the individual tabs.  DO NOT think that you will be giving me a burden by giving me your ideas.  Rather, you would be improving the synthesizer for the hundreds of thousands of people who will use it in the future of LMMS.  Please tell me absolutely every idea for it that you have that you think would be beneficial and worth adding, even if it seems stupid, and especially if it seems impossible.  It is oftentimes quite difficult to tell the difference between things that are impossible and things that haven't been done yet.
+
+Thank you <3
+

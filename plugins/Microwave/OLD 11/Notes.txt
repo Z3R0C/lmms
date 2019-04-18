@@ -1,0 +1,250 @@
+Input Mod -> Mod Amount -> Mod Curve -> Signal -> Combination Mode -> Secondary Input Mod -> Secondary Mod Amount -> Secondary Mod Curve
+
+Tab -> Input Mod -> Number
+
+Sub oscillators: Volume, Phase, Phase Randomness, Detune, Enabled, Muted, Sample Length, Noise, Keytracking, and Panning
+
+
+
+
+
+Filters: Input Volume, Filter Type, Slope, Cutoff Frequency, Resonance, db Gain, Saturation, Wet/Dry, Balance (Panning), Output Volume
+
+Make sure you add Attack and Release knobs to the mod matrix so an input follower is possible
+
+Remember to add tempo sync
+
+Change "valueChanged" ID thingywhatevers when done
+
+Squarify by crossfading both sides of the waveform with the other side multiplied by -1.
+
+Fix strange behavior when input to mod curve exponentiation calculation is less than 0
+
+Make modulation values stereo instead of mono
+
+
+
+
+mSynth::nextStringSample
+mSynth::getRealIndex
+mSynth::detuneWithCents
+mSynth::refreshValue
+Microwave::Microwave
+Microwave::~Microwave
+Microwave::valueChanged
+Microwave::saveSettings
+Microwave::loadSettings
+MicrowaveView::updateScroll
+MicrowaveView::scrollReleased
+MicrowaveView::updateGraphColor
+Microwave::morphMaxChanged
+Microwave::sampLenChanged
+Microwave::subSampLenChanged
+Microwave::subEnabledChanged
+Microwave::modEnabledChanged
+MicrowaveView::mainNumChanged
+MicrowaveView::modOutSecChanged
+MicrowaveView::modInChanged
+MicrowaveView::subNumChanged
+MicrowaveView::sampNumChanged
+Microwave::samplesChanged
+Microwave::normalize
+Microwave::nodeName
+Microwave::playNote
+Microwave::deleteNotePluginData
+Microwave::instantiateView
+MicrowaveView::MicrowaveView
+MicrowaveView::modelChanged
+MicrowaveView::mouseMoveEvent
+MicrowaveView::sinWaveClicked
+...etc.
+Microwave::setGraphLength
+MicrowaveView::tabChanged
+MicrowaveView::interpolationToggled
+MicrowaveView::normalizeToggled
+MicrowaveView::visualizeToggled
+MicrowaveView::openWavetableFileBtnClicked
+MicrowaveView::openWavetableFile
+
+
+--MICROWAVE
+Microwave::Microwave
+Microwave::~Microwave
+Microwave::instantiateView
+Microwave::nodeName
+Microwave::saveSettings
+Microwave::loadSettings
+Microwave::valueChanged
+Microwave::morphMaxChanged
+Microwave::sampLenChanged
+Microwave::subSampLenChanged
+Microwave::subEnabledChanged
+Microwave::modEnabledChanged
+Microwave::samplesChanged
+Microwave::normalize
+Microwave::setGraphLength
+Microwave::playNote
+Microwave::deleteNotePluginData
+
+
+==MICROWAVE VIEW==
+MicrowaveView::MicrowaveView
+MicrowaveView::modelChanged
+MicrowaveView::updateScroll
+MicrowaveView::scrollReleased
+MicrowaveView::mouseMoveEvent
+MicrowaveView::mainNumChanged
+MicrowaveView::subNumChanged
+MicrowaveView::sampNumChanged
+MicrowaveView::modOutSecChanged
+MicrowaveView::modInChanged
+MicrowaveView::tabChanged
+MicrowaveView::interpolationToggled
+MicrowaveView::normalizeToggled
+MicrowaveView::visualizeToggled
+MicrowaveView::sinWaveClicked
+...etc.
+MicrowaveView::updateGraphColor
+MicrowaveView::openWavetableFileBtnClicked
+MicrowaveView::openWavetableFile
+
+== MSYNTH ==
+mSynth::mSynth
+mSynth::~mSynth
+mSynth::nextStringSample
+mSynth::detuneWithCents
+mSynth::refreshValue
+
+
+
+
+Vocoder:  Number of bands (up to 64), frequency bias (makes higher or lower bands louder), swap inputs (LED, switch the two inputs), lower bound (frequency of lowest band), higher bound (frequency of highest band), Enabled
+
+
+Move wavetable and sample opening functions from MicrowaveView to Microwave (is this necessary?)
+Alternatively, remove the repetitions of CastModel and put that into a variable.
+
+
+Sample tab:  Enabled, Graph enabled, Muted, Keytracking, Loop, Volume, Panning, Detune, Phase, Phase Randomness
+
+//Change curve value to go from -100 to 100 instead of 0 to 200
+
+
+//Fix the curve formula.  Scale input so it's from 0 to 1, and ignore everything (after scale) below 0 and above 1.
+
+Add option to remove retriggering for sub oscillators
+
+//Remove unnecessary GUI moving outside of scrollChanged (e.g. when MicrowaveView is initialized)
+
+Replace the word "mod" with "matrix" where necessary
+
+Don't forget about memory leaks...
+
+Fix all the visualizer problems, don't forget that feature exists.
+
+~~Add~~ Fix macro knobs.
+
+You're going to forget to order everything, aren't you?  Put the dropdown boxes in a sane order.
+
+//Add a Muted knob to the filters.
+
+Add options in the matrix to output something to all oscillators.
+
+Allow all oscillator types to obey the envelope LED in the matrix, if you dare.
+
+//Optimize performance of sub tab, sample tab, filters, etc.
+
+Make the matrix show the correct options in the boxes and stuff... you know, all that stuff...
+
+If you're very, very stupid, allow modulation of the dropdown boxes in the matrix tab.  Yes.  Those.  Mmhmm.  Sorry in advance.
+
+
+
+
+
+
+
+
+
+
+WAVETABLE LOADING ALGORITHMS:
+
+1. Pure sample load
+
+You know how to do this
+
+
+2. Serum wavetable load
+
+You know how to do this
+
+
+3. Nearest Zero-crossing method
+
+Knob 1 - Minimum Gap
+
+Skips <Minimim Gap> length, searches for the next zero-crossing, repeats again, and trims from there to previous zero-crossing to get waveform.
+
+
+4. Estimated Zero-crossing method
+
+Knob 1 - Estimated Gap
+
+Goes <Esimated Gap> samples away from previous zero-crossing, checks in both directions for the zero-crossing nearest to that point, repeats again, and trims from there to previous zero-crossing to get waveform.
+
+
+5. Specified gap method
+
+Knob 1 - Gap
+
+Goes <Gap> samples and grabs a waveform from there to the previous spot.
+
+
+6. Similarity test method
+
+Knob 1 - Start
+Knob 2 - Gap
+Knob 3 - Average Difference (for displaying data, not being controlled by user)
+
+Starting at <Start>, <Start> + <Gap> / 4, <Start> + <Gap> / 2, and <Start> + 3*<Gap> / 4, take the average difference between the startpoint, the startpoint + <Gap>, the startpoint + 2*<Gap>, and the startpoint + 3*<Gap>, and put that value into <Average Difference>.  When done, work just like the "Specified Gap Method".
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Scrap that.
+
+
+1.
+
+Knob 1 - Length
+
+A graph shows the entire imported sound.  The length knob decreases the graph length.  The user is instructed to decrease the graph length until exactly two waveform cycles are displayed, then click a + button.  They are allowed to do this as many times as they'd like.  When they're done, the lengths are averaged, and that is the length of two waveforms used when loading the wavetable.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

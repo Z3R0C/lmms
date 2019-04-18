@@ -1,0 +1,18 @@
+Input Mod -> Mod Amount -> Mod Curve -> Signal -> Combination Mode -> Secondary Input Mod -> Secondary Mod Amount -> Secondary Mod Curve
+
+Tab -> Input Mod -> Number
+
+Input:
+Main: 1-8
+Sub: 1-32
+Noise: 1
+
+Sub oscillators: Volume, Phase, Phase Randomness, Detune, Muted, Keytracking, Sample Length
+
+
+
+
+
+Filters: Input Volume, Filter Type, Slope, Cutoff Frequency, Resonance, db Gain, Saturation, Wet/Dry, Balance (Panning), Output Volume
+
+Make sure you add Attack and Release knobs to the mod matrix so an input follower is possible

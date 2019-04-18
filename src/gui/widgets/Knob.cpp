@@ -116,6 +116,12 @@ void Knob::initUi( const QString & _name )
 	case knobVintage_32:
 		setlineColor(QApplication::palette().color( QPalette::Active, QPalette::Shadow ));
 		break;
+	case knobMicrowave:
+		setlineColor(QColor(102,198,199));
+		break;
+	case knobSmallMicrowave:
+		setlineColor(QColor(102,198,199));
+		break;
 	default:
 		break;
 	}
@@ -144,6 +150,12 @@ void Knob::onKnobNumUpdated()
 			break;
 		case knobVintage_32:
 			knobFilename = "knob05";
+			break;
+		case knobMicrowave:
+			knobFilename = "knob_microwave";
+			break;
+		case knobSmallMicrowave:
+			knobFilename = "knob_small_microwave";
 			break;
 		case knobStyled: // only here to stop the compiler from complaining
 			break;
@@ -436,9 +448,12 @@ void Knob::drawKnob( QPainter * _p )
 	const float radius = m_knobPixmap->width() / 2.0f - 1;
 	mid = QPoint( width() / 2, m_knobPixmap->height() / 2 );
 
-	p.drawPixmap( static_cast<int>(
-				width() / 2 - m_knobPixmap->width() / 2 ), 0,
-				*m_knobPixmap );
+	if( m_knobNum != knobMicrowave && m_knobNum != knobSmallMicrowave )
+	{
+		p.drawPixmap( static_cast<int>(
+					width() / 2 - m_knobPixmap->width() / 2 ), 0,
+					*m_knobPixmap );
+	}
 
 	p.setRenderHint( QPainter::Antialiasing );
 
@@ -450,6 +465,8 @@ void Knob::drawKnob( QPainter * _p )
 	QColor col;
 	if( m_knobNum == knobVintage_32 )
 	{	col = QApplication::palette().color( QPalette::Active, QPalette::Shadow ); }
+	else if( m_knobNum == knobMicrowave || m_knobNum == knobSmallMicrowave )
+	{	col = QColor(46,74,80); }
 	else
 	{	col = QApplication::palette().color( QPalette::Active, QPalette::WindowText ); }
 	col.setAlpha( 70 );
@@ -480,6 +497,41 @@ void Knob::drawKnob( QPainter * _p )
 			QLineF ln = calculateLine( mid, re, rb );
 			ln.translate( 1, 1 );
 			p.drawLine( ln );
+			break;
+		}
+		case knobMicrowave:
+		{
+			// Draw circle
+			p.setPen( QPen( QColor(64,92,97), 2 ) );
+			p.setBrush( QColor(64,92,97) );
+			p.drawEllipse( QRectF( mid.x()-7, mid.y()-7, 15, 15 ) );
+
+			// Draw line
+			p.setPen( QPen( QColor(102,198,199), 2 ) );
+			const float rb = qMax<float>( ( radius - 10 ) / 3.0,
+									0.0 );
+			const float re = qMax<float>( ( radius - 4 ), 0.0 );
+			QLineF ln = calculateLine( mid, re, rb );
+			ln.translate( 1, 1 );
+			p.drawLine( ln );
+
+			// Set color for arc
+			p.setPen( QPen( QColor(102,198,199), 2 ) );
+			break;
+		}
+		case knobSmallMicrowave:
+		{
+			// Draw circle
+			p.setPen( QPen( QColor(64,92,97), 2 ) );
+			p.setBrush( QColor(64,92,97) );
+			p.drawEllipse( QRectF( mid.x()-4, mid.y()-4, 9, 9 ) );
+
+			// Draw line
+			p.setPen( QPen( QColor(102,198,199), 2 ) );
+			p.drawLine( calculateLine( mid, radius-2 ) );
+
+			// Set color for arc
+			p.setPen( QPen( QColor(102,198,199), 2 ) );
 			break;
 		}
 		case knobVintage_32:

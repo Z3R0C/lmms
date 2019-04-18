@@ -1,0 +1,195 @@
+Input Mod -> Mod Amount -> Mod Curve -> Signal -> Combination Mode -> Secondary Input Mod -> Secondary Mod Amount -> Secondary Mod Curve
+
+Tab -> Input Mod -> Number
+
+Input:
+Main: 1-8
+Sub: 1-32
+
+Sub oscillators: Volume, Phase, Phase Randomness, Detune, Enabled, Muted, Sample Length, Noise, Keytracking, and Panning
+
+
+
+
+
+Filters: Input Volume, Filter Type, Slope, Cutoff Frequency, Resonance, db Gain, Saturation, Wet/Dry, Balance (Panning), Output Volume
+
+Make sure you add Attack and Release knobs to the mod matrix so an input follower is possible
+
+Also allow modulation of values depending on note velocity
+
+Remember to add tempo sync
+
+
+
+
+1. Keep array(s) of changed values
+2. Calculate new variable value before use
+3. Use valueChanged to change the values back
+
+
+
+
+$$$ 1. Clone arrays and send to bSynth initialization
+$$$ 2. Send all knob changes to the same array
+3. Send array changes to a vector
+4. Keep track of how many notes are being played
+5. Every sample, replace the values with those stored in the vector
+6. After <number of notes playing> (may need to be adjusted depending on tempo and buffer size) samples pass since a knob change, remove that change record from the vector
+
+
+
+
+Remember to remove "m_" from many things when done
+
+Change "valueChanged" ID thingywhatevers when done
+
+
+
+
+
+Squarify by crossfading both sides of the waveform with the other side multiplied by -1.
+
+
+Fix strange behavior when input to mod curve exponentiation calculation is less than 0
+
+Make modulation values stereo instead of mono
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mSynth::nextStringSample
+mSynth::getRealIndex
+mSynth::detuneWithCents
+mSynth::refreshValue
+Microwave::Microwave
+Microwave::~Microwave
+Microwave::valueChanged
+Microwave::saveSettings
+Microwave::loadSettings
+MicrowaveView::updateScroll
+MicrowaveView::scrollReleased
+MicrowaveView::updateGraphColor
+Microwave::morphMaxChanged
+Microwave::sampLenChanged
+Microwave::subSampLenChanged
+Microwave::subEnabledChanged
+Microwave::modEnabledChanged
+MicrowaveView::mainNumChanged
+MicrowaveView::modOutSecChanged
+MicrowaveView::modInChanged
+MicrowaveView::subNumChanged
+MicrowaveView::sampNumChanged
+Microwave::samplesChanged
+Microwave::normalize
+Microwave::nodeName
+Microwave::playNote
+Microwave::deleteNotePluginData
+Microwave::instantiateView
+MicrowaveView::MicrowaveView
+MicrowaveView::modelChanged
+MicrowaveView::mouseMoveEvent
+MicrowaveView::sinWaveClicked
+...etc.
+Microwave::setGraphLength
+MicrowaveView::tabChanged
+MicrowaveView::interpolationToggled
+MicrowaveView::normalizeToggled
+MicrowaveView::visualizeToggled
+MicrowaveView::openWavetableFileBtnClicked
+MicrowaveView::openWavetableFile
+
+
+
+
+
+
+
+--MICROWAVE
+Microwave::Microwave
+Microwave::~Microwave
+Microwave::instantiateView
+Microwave::nodeName
+Microwave::saveSettings
+Microwave::loadSettings
+Microwave::valueChanged
+Microwave::morphMaxChanged
+Microwave::sampLenChanged
+Microwave::subSampLenChanged
+Microwave::subEnabledChanged
+Microwave::modEnabledChanged
+Microwave::samplesChanged
+Microwave::normalize
+Microwave::setGraphLength
+Microwave::playNote
+Microwave::deleteNotePluginData
+
+
+==MICROWAVE VIEW==
+MicrowaveView::MicrowaveView
+MicrowaveView::modelChanged
+MicrowaveView::updateScroll
+MicrowaveView::scrollReleased
+MicrowaveView::mouseMoveEvent
+MicrowaveView::mainNumChanged
+MicrowaveView::subNumChanged
+MicrowaveView::sampNumChanged
+MicrowaveView::modOutSecChanged
+MicrowaveView::modInChanged
+MicrowaveView::tabChanged
+MicrowaveView::interpolationToggled
+MicrowaveView::normalizeToggled
+MicrowaveView::visualizeToggled
+MicrowaveView::sinWaveClicked
+...etc.
+MicrowaveView::updateGraphColor
+MicrowaveView::openWavetableFileBtnClicked
+MicrowaveView::openWavetableFile
+
+== MSYNTH ==
+mSynth::mSynth
+mSynth::~mSynth
+mSynth::nextStringSample
+mSynth::detuneWithCents
+mSynth::refreshValue
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Vocoder:  Number of bands (up to 64), frequency bias (makes higher or lower bands louder), swap inputs (LED, switch the two inputs), lower bound (frequency of lowest band), higher bound (frequency of highest band), Enabled
+
+
+Move wavetable and sample opening functions from MicrowaveView to Microwave
+
+
+Sample tab:  Enabled, Graph enabled, Muted, Keytracking, Loop, Volume, Panning, Detune, Phase, Phase Randomness

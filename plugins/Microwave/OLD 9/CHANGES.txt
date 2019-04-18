@@ -1,0 +1,5 @@
+Microwave stuff
+SampleBuffer stuff
+Knob stuff (remember to fix knob ring stuff)
+Graph stuff
+LcdSpinBox.cpp

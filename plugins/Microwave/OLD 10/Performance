@@ -1,0 +1,18 @@
+Use "++i" instead of "i++".  1% boost for integers.
+Use "+=" instead of "+" for strings (23% boost), but use "+" instead of "+=" for integers (otherwise shrinks to 93% speed).
+Prefer initialization over assignment.  4% boost for integers.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+`if( __builtin_expect( variable, expected value ) )` will increase performance if "expected value" is the right value, and will otherwise decrease performance slightly.
