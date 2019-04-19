@@ -674,7 +674,7 @@ public:
 	void refreshValue( int which, int num );
 
 private:
-	float sample_realindex[8][32] = {(0)};
+	float sample_realindex[8][32] = {{0}};
 	float sample_subindex[64] = {0};
 	float sample_sampleindex[8] = {0};
 	NotePlayHandle* nph;
