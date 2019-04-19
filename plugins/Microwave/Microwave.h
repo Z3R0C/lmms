@@ -706,8 +706,8 @@ private:
 
 	float filtInputs[8][2] = {{0}};// [filter number][channel]
 	float filtOutputs[8][2] = {{0}};// [filter number][channel]
-	float filtPrevSampIn[8][8][5][2] = {{{0}}};// [filter number][slope][samples back in time][channel]
-	float filtPrevSampOut[8][8][5][2] = {{{0}}};// [filter number][slope][samples back in time][channel]
+	float filtPrevSampIn[8][8][5][2] = {{{{0}}}};// [filter number][slope][samples back in time][channel]
+	float filtPrevSampOut[8][8][5][2] = {{{{0}}}};// [filter number][slope][samples back in time][channel]
 	float filtModOutputs[8][2] = {{0}};// [filter number][channel]
 
 	std::vector<float> filtDelayBuf[8][2];// [filter number][channel]
@@ -825,7 +825,7 @@ private:
 
 	float humanizer[8] = {0};
 
-	float unisonDetuneAmounts[8][32] = {0};
+	float unisonDetuneAmounts[8][32] = {{0}};
 
 	float temp1;
 	float temp2;
