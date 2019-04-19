@@ -4701,41 +4701,43 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 	{
 		if( enabled[i] )
 		{
-			
-			if( !muted[i] )
+			if( unisonVoices[i] > 1 )
 			{
-				if( unisonVoices[i] > 1 )
+				sampleMainOsc[0] = 0;
+				sampleMainOsc[1] = 0;
+				for( int j = 0; j < unisonVoices[i]; ++j )
 				{
-					sampleMainOsc[0] = 0;
-					sampleMainOsc[1] = 0;
-					for( int j = 0; j < unisonVoices[i]; ++j )
-					{
-						// Pan unison voices
-						sampleMainOsc[0] += sample[i][j] * ((unisonVoicesMinusOne-j)/unisonVoicesMinusOne);
-						sampleMainOsc[1] += sample[i][j] * (j/unisonVoicesMinusOne);
-					}
-					// Decrease volume so more unison voices won't increase volume too much
-					temp1 = unisonVoices[i] * 0.5f;
-					sampleMainOsc[0] /= temp1;
-					sampleMainOsc[1] /= temp1;
-					
-					sampleAvg[0] += sampleMainOsc[0];
-					sampleAvg[1] += sampleMainOsc[1];
+					// Pan unison voices
+					sampleMainOsc[0] += sample[i][j] * ((unisonVoicesMinusOne-j)/unisonVoicesMinusOne);
+					sampleMainOsc[1] += sample[i][j] * (j/unisonVoicesMinusOne);
+				}
+				// Decrease volume so more unison voices won't increase volume too much
+				temp1 = unisonVoices[i] * 0.5f;
+				sampleMainOsc[0] /= temp1;
+				sampleMainOsc[1] /= temp1;
+				
+				sampleAvg[0] += sampleMainOsc[0];
+				sampleAvg[1] += sampleMainOsc[1];
+			}
+			else
+			{
+				sampleAvg[0] += sample[i][0];
+				sampleAvg[1] += sample[i][0];
+			}
 
-					lastMainOscVal[i][0] += sampleMainOsc[0];// Store results for modulations
-					lastMainOscVal[i][1] += sampleMainOsc[1];
-					
-					if( !lastMainOscEnvDone[i] )
-					{
-						lastMainOscEnvVal[i][0] = lastMainOscVal[i][0];
-						lastMainOscEnvVal[i][1] = lastMainOscVal[i][1];
-					}
-				}
-				else
-				{
-					sampleAvg[0] += sample[i][0];
-					sampleAvg[1] += sample[i][0];
-				}
+			lastMainOscVal[i][0] = sampleAvg[0];// Store results for modulations
+			lastMainOscVal[i][1] = sampleAvg[1];
+			
+			if( !lastMainOscEnvDone[i] )
+			{
+				lastMainOscEnvVal[i][0] = lastMainOscVal[i][0];
+				lastMainOscEnvVal[i][1] = lastMainOscVal[i][1];
+			}
+
+			if( muted[i] )
+			{
+				sampleAvg[0] = 0;
+				sampleAvg[1] = 0;
 			}
 		}
 	}
