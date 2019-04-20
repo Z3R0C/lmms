@@ -190,12 +190,12 @@ class Microwave : public Instrument
 #define loadmodemodel( name )\
 		name.addItem( tr( "Load sample without changes" ) );\
 		name.addItem( tr( "Load wavetable file" ) );\
-		name.addItem( tr( "Autocorrelation method" ) );\
-		name.addItem( tr( "Choose waveform length" ) );\
+		name.addItem( tr( "Autocorrelation method" ) );
+/*		name.addItem( tr( "Choose waveform length" ) );\
 		name.addItem( tr( "Similarity Test Method" ) );\
 		name.addItem( tr( "6x" ) );\
 		name.addItem( tr( "7x" ) );\
-		name.addItem( tr( "8x" ) );
+		name.addItem( tr( "8x" ) );*/
 
 public:
 	Microwave(InstrumentTrack * _instrument_track );
