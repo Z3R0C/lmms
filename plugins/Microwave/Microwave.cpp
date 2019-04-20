@@ -386,6 +386,8 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		valueChanged(70, i);
 		valueChanged(71, i);
 		valueChanged(78, i);
+		valueChanged(79, i);
+		valueChanged(80, i);
 
 		connect( sampleEnabled[i], &BoolModel::dataChanged, this, [this, i]() { sampleEnabledChanged(i); }, Qt::DirectConnection );
 
@@ -442,6 +444,12 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		valueChanged(77, i);
 
 		connect( modEnabled[i], &BoolModel::dataChanged, this, [this, i]() { modEnabledChanged(i); }, Qt::DirectConnection );
+	}
+
+	for( int i = 0; i < 8; ++i )
+	{
+		samples[i][0].push_back(0);
+		samples[i][1].push_back(0);
 	}
 }
 
@@ -983,7 +991,10 @@ void Microwave::sampLenChanged()
 //Change graph length to sample length
 void Microwave::subSampLenChanged( int num )
 {
-	graph.setLength( subSampLen[num]->value() );
+	if( scroll.value() == 2 && subNum.value() == num + 1 )
+	{
+		graph.setLength( subSampLen[num]->value() );
+	}
 }
 
 
@@ -1176,7 +1187,7 @@ void Microwave::playNote( NotePlayHandle * _n,
 		}
 
 		//update visualizer
-		if( visualize.value() )
+		if( visualize.value() && scroll.value() == 1 )
 		{
 			if( abs( const_cast<float*>( graph.samples() )[int(ps->sample_realindex[0][0])] - ( ( ( sample[0] + sample[1] ) * 0.5f ) * visvol.value() * 0.01f ) ) >= 0.01f )
 			{
@@ -2400,25 +2411,16 @@ void MicrowaveView::modOutSecChanged( int i )
 			b->modOutSecNum[i]->setRange( 1.f, 64.f, 1.f );
 			break;
 		}
-		case 3:// Filter Input
+		case 3:// Sample OSC
 		{
 			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->hide();
+			modOutSecNumBox[i]->show();
 			b->modOutSig[i]->clear();
-			mod8model( b->modOutSig[i] )
-			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+			samplesignalsmodel( b->modOutSig[i] )
+			b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
 			break;
 		}
-		case 4:// Filter Parameters
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->hide();
-			b->modOutSig[i]->clear();
-			filtersignalsmodel( b->modOutSig[i] )
-			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
-			break;
-		}
-		case 5:// Matrix Parameters
+		case 4:// Matrix Parameters
 		{
 			modOutSigBox[i]->show();
 			modOutSecNumBox[i]->show();
@@ -2427,13 +2429,31 @@ void MicrowaveView::modOutSecChanged( int i )
 			b->modOutSecNum[i]->setRange( 1.f, 64.f, 1.f );
 			break;
 		}
-		case 6:// Sample OSC
+		case 5:// Filter Input
 		{
 			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->show();
+			modOutSecNumBox[i]->hide();
 			b->modOutSig[i]->clear();
-			samplesignalsmodel( b->modOutSig[i] )
-			b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+			mod8model( b->modOutSig[i] )
+			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+			break;
+		}
+		case 6:// Filter Parameters
+		{
+			modOutSigBox[i]->show();
+			modOutSecNumBox[i]->hide();
+			b->modOutSig[i]->clear();
+			filtersignalsmodel( b->modOutSig[i] )
+			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+			break;
+		}
+		case 7:// Macro
+		{
+			modOutSigBox[i]->show();
+			modOutSecNumBox[i]->hide();
+			b->modOutSig[i]->clear();
+			mod8model( b->modOutSig[i] )
+			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
 			break;
 		}
 		default:
@@ -2966,6 +2986,9 @@ void MicrowaveView::openWavetableFile( QString fileName )
 				{
 					b->waveforms[oscilNum][i] = sampleBuffer->userWaveSample( ((i/2048.f)*period)/lengthOfSample, channel );
 				}
+
+				b->morphMax[oscilNum]->setValue( 254 );
+				b->morphMaxChanged();
 
 
 				break;
