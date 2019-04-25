@@ -2647,18 +2647,22 @@ void MicrowaveView::XBtnClicked()
 
 void MicrowaveView::modUpClicked( int i )
 {
-	if( i > 0 )
+	int modScrollVal = ( matrixScrollBar->value() ) / 100.f * 115.f;
+	int matrixDivide = modScrollVal / 460 * 4;
+	if( i+matrixDivide > 0 )
 	{
-		castModel<Microwave>()->switchMatrixSections( i, i - 1 );
+		castModel<Microwave>()->switchMatrixSections( i+matrixDivide, i+matrixDivide - 1 );
 	}
 }
 
 
 void MicrowaveView::modDownClicked( int i )
 {
-	if( i < 63 )
+	int modScrollVal = ( matrixScrollBar->value() ) / 100.f * 115.f;
+	int matrixDivide = modScrollVal / 460 * 4;
+	if( i+matrixDivide < 63 )
 	{
-		castModel<Microwave>()->switchMatrixSections( i, i + 1 );
+		castModel<Microwave>()->switchMatrixSections( i+matrixDivide, i+matrixDivide + 1 );
 	}
 }
 
