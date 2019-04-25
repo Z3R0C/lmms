@@ -263,7 +263,8 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		modinmodel( modIn[i] )
 
 		modInAmnt[i] = new FloatModel( 0, -200, 200, 0.0001f, this, tr( "Modulator Amount" ) );
-		modInCurve[i] = new FloatModel( 100, 0.0001f, 200, 0.0001f, this, tr( "Modulator Curve" ) );
+		modInCurve[i] = new FloatModel( 100, 10.f, 600, 0.0001f, this, tr( "Modulator Curve" ) );
+		modInCurve[i]->setScaleLogarithmic( true );
 
 		modIn2[i] = new ComboBoxModel( this, tr( "Secondary Modulator" ) );
 		modInNum2[i] = new IntModel( 1, 1, 8, this, tr( "Secondary Modulator Number" ) );
@@ -271,7 +272,8 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		modinmodel( modIn2[i] )
 
 		modInAmnt2[i] = new FloatModel( 0, -200, 200, 0.0001f, this, tr( "Secondary Modulator Amount" ) );
-		modInCurve2[i] = new FloatModel( 100, 0.0001f, 200, 0.0001f, this, tr( "Secondary Modulator Curve" ) );
+		modInCurve2[i] = new FloatModel( 100, 10.f, 600, 0.0001f, this, tr( "Secondary Modulator Curve" ) );
+		modInCurve2[i]->setScaleLogarithmic( true );
 
 		modCombineType[i] = new ComboBoxModel( this, tr( "Combination Type" ) );
 		modcombinetypemodel( modCombineType[i] )
@@ -456,6 +458,15 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 
 Microwave::~Microwave()
 {
+	for( int i = 0; i < 64; ++i )
+	{
+		/*The following disconnected functions will run if not disconnected upon deletion,
+		because deleting a ComboBox includes clearing its contents first,
+		which will fire a dataChanged event.  So, we need to disconnect them to
+		prevent a crash.*/
+		disconnect(modIn[i], &ComboBoxModel::dataChanged, 0, 0);
+		disconnect(modOutSec[i], &ComboBoxModel::dataChanged, 0, 0);
+	}
 }
 
 
@@ -875,93 +886,90 @@ void Microwave::valueChanged( int which, int num )
 		case 80: phaseRandArr[num] = phaseRand[num]->value(); break;
 	}
 
-	ConstNotePlayHandleList nphList = NotePlayHandle::nphsOfInstrumentTrack( microwaveTrack );
+	ConstNotePlayHandleList nphList = NotePlayHandle::nphsOfInstrumentTrack( microwaveTrack, true );
 
 	for( int i = 0; i < nphList.length(); ++i )
 	{
-		mSynth * ps;
-		do
-		{
-			ps = static_cast<mSynth *>( nphList[i]->m_pluginData );
-		}
-		while ( !ps );// Makes sure "ps" isn't assigned a null value, if m_pluginData hasn't been created yet.
-		// Above is possible CPU concern
+		mSynth * ps = static_cast<mSynth *>( nphList[i]->m_pluginData );
 
-		//Send new knob values to notes already playing
-		switch( which )
+		if( ps )// Makes sure "ps" isn't assigned a null value, if m_pluginData hasn't been created yet.
 		{
-			case 1: ps->morphVal[num] = morph[num]->value(); break;
-			case 2: ps->rangeVal[num] = range[num]->value(); break;
-			case 3: ps->modifyVal[num] = modify[num]->value(); break;
-			case 4: ps->modifyModeVal[num] = modifyMode[num]->value(); break;
-			case 6: ps->unisonVoices[num] = unisonVoices[num]->value(); break;
-			case 7: ps->unisonDetune[num] = unisonDetune[num]->value(); break;
-			case 8: ps->unisonMorph[num] = unisonMorph[num]->value(); break;
-			case 9: ps->unisonModify[num] = unisonModify[num]->value(); break;
-			case 10: ps->morphMaxVal[num] = morphMax[num]->value(); break;
-			case 11: ps->detuneVal[num] = detune[num]->value(); break;
-			case 12: ps->sampLen[num] = sampLen[num]->value(); break;
-			case 13: ps->phase[num] = phase[num]->value(); break;
-			case 14: ps->vol[num] = vol[num]->value(); break;
-			case 15: ps->filtInVol[num] = filtInVol[num]->value(); break;
-			case 16: ps->filtType[num] = filtType[num]->value(); break;
-			case 17: ps->filtSlope[num] = filtSlope[num]->value(); break;
-			case 18: ps->filtCutoff[num] = filtCutoff[num]->value(); break;
-			case 19: ps->filtReso[num] = filtReso[num]->value(); break;
-			case 20: ps->filtGain[num] = filtGain[num]->value(); break;
-			case 21: ps->filtSatu[num] = filtSatu[num]->value(); break;
-			case 22: ps->filtWetDry[num] = filtWetDry[num]->value(); break;
-			case 23: ps->filtBal[num] = filtBal[num]->value(); break;
-			case 24: ps->filtOutVol[num] = filtOutVol[num]->value(); break;
-			case 25: ps->filtEnabled[num] = filtEnabled[num]->value(); break;
-			case 26: ps->subEnabled[num] = subEnabled[num]->value(); break;
-			case 27: ps->subVol[num] = subVol[num]->value(); break;
-			case 28: ps->subPhase[num] = subPhase[num]->value(); break;
-			case 29: ps->subPhaseRand[num] = subPhaseRand[num]->value(); break;
-			case 30: ps->subDetune[num] = subDetune[num]->value(); break;
-			case 31: ps->subMuted[num] = subMuted[num]->value(); break;
-			case 32: ps->subKeytrack[num] = subKeytrack[num]->value(); break;
-			case 33: ps->subSampLen[num] = subSampLen[num]->value(); break;
-			case 34: ps->subNoise[num] = subNoise[num]->value(); break;
-			case 35: ps->modIn[num] = modIn[num]->value(); break;
-			case 36: ps->modInNum[num] = modInNum[num]->value(); break;
-			case 37: ps->modInOtherNum[num] = modInOtherNum[num]->value(); break;
-			case 38: ps->modInAmnt[num] = modInAmnt[num]->value(); break;
-			case 39: ps->modInCurve[num] = modInCurve[num]->value(); break;
-			case 40: ps->modIn2[num] = modIn2[num]->value(); break;
-			case 41: ps->modInNum2[num] = modInNum2[num]->value(); break;
-			case 42: ps->modInOtherNum2[num] = modInOtherNum2[num]->value(); break;
-			case 43: ps->modInAmnt2[num] = modInAmnt2[num]->value(); break;
-			case 44: ps->modInCurve2[num] = modInCurve2[num]->value(); break;
-			case 45: ps->modOutSec[num] = modOutSec[num]->value(); break;
-			case 46: ps->modOutSig[num] = modOutSig[num]->value(); break;
-			case 47: ps->modOutSecNum[num] = modOutSecNum[num]->value(); break;
-			case 48: ps->enabled[num] = enabled[num]->value(); break;
-			case 49: ps->modEnabled[num] = modEnabled[num]->value(); break;
-			case 50: ps->modCombineType[num] = modCombineType[num]->value(); break;
-			case 57: ps->muted[num] = muted[num]->value(); break;
-			case 59: ps->sampleEnabled[num] = sampleEnabled[num]->value(); break;
-			case 60: ps->sampleGraphEnabled[num] = sampleGraphEnabled[num]->value(); break;
-			case 61: ps->sampleMuted[num] = sampleMuted[num]->value(); break;
-			case 62: ps->sampleKeytracking[num] = sampleKeytracking[num]->value(); break;
-			case 63: ps->sampleLoop[num] = sampleLoop[num]->value(); break;
-			case 64: ps->sampleVolume[num] = sampleVolume[num]->value(); break;
-			case 65: ps->samplePanning[num] = samplePanning[num]->value(); break;
-			case 66: ps->sampleDetune[num] = sampleDetune[num]->value(); break;
-			case 67: ps->samplePhase[num] = samplePhase[num]->value(); break;
-			case 68: ps->samplePhaseRand[num] = samplePhaseRand[num]->value(); break;
-			case 69: ps->filtFeedback[num] = filtFeedback[num]->value(); break;
-			case 70: ps->filtDetune[num] = filtDetune[num]->value(); break;
-			case 71: ps->filtKeytracking[num] = filtKeytracking[num]->value(); break;
-			case 72: ps->subPanning[num] = subPanning[num]->value(); break;
-			case 73: ps->sampleStart[num] = sampleStart[num]->value(); break;
-			case 74: ps->sampleEnd[num] = sampleEnd[num]->value(); break;
-			case 75: ps->pan[num] = pan[num]->value(); break;
-			case 76: ps->subTempo[num] = subTempo[num]->value(); break;
-			case 77: ps->modType[num] = modType[num]->value(); break;
-			case 78: ps->macro[num] = macro[num]->value(); break;
-			case 79: ps->filtMuted[num] = filtMuted[num]->value(); break;
-			case 80: ps->phaseRand[num] = phaseRand[num]->value(); break;
+			//Send new knob values to notes already playing
+			switch( which )
+			{
+				case 1: ps->morphVal[num] = morph[num]->value(); break;
+				case 2: ps->rangeVal[num] = range[num]->value(); break;
+				case 3: ps->modifyVal[num] = modify[num]->value(); break;
+				case 4: ps->modifyModeVal[num] = modifyMode[num]->value(); break;
+				case 6: ps->unisonVoices[num] = unisonVoices[num]->value(); break;
+				case 7: ps->unisonDetune[num] = unisonDetune[num]->value(); break;
+				case 8: ps->unisonMorph[num] = unisonMorph[num]->value(); break;
+				case 9: ps->unisonModify[num] = unisonModify[num]->value(); break;
+				case 10: ps->morphMaxVal[num] = morphMax[num]->value(); break;
+				case 11: ps->detuneVal[num] = detune[num]->value(); break;
+				case 12: ps->sampLen[num] = sampLen[num]->value(); break;
+				case 13: ps->phase[num] = phase[num]->value(); break;
+				case 14: ps->vol[num] = vol[num]->value(); break;
+				case 15: ps->filtInVol[num] = filtInVol[num]->value(); break;
+				case 16: ps->filtType[num] = filtType[num]->value(); break;
+				case 17: ps->filtSlope[num] = filtSlope[num]->value(); break;
+				case 18: ps->filtCutoff[num] = filtCutoff[num]->value(); break;
+				case 19: ps->filtReso[num] = filtReso[num]->value(); break;
+				case 20: ps->filtGain[num] = filtGain[num]->value(); break;
+				case 21: ps->filtSatu[num] = filtSatu[num]->value(); break;
+				case 22: ps->filtWetDry[num] = filtWetDry[num]->value(); break;
+				case 23: ps->filtBal[num] = filtBal[num]->value(); break;
+				case 24: ps->filtOutVol[num] = filtOutVol[num]->value(); break;
+				case 25: ps->filtEnabled[num] = filtEnabled[num]->value(); break;
+				case 26: ps->subEnabled[num] = subEnabled[num]->value(); break;
+				case 27: ps->subVol[num] = subVol[num]->value(); break;
+				case 28: ps->subPhase[num] = subPhase[num]->value(); break;
+				case 29: ps->subPhaseRand[num] = subPhaseRand[num]->value(); break;
+				case 30: ps->subDetune[num] = subDetune[num]->value(); break;
+				case 31: ps->subMuted[num] = subMuted[num]->value(); break;
+				case 32: ps->subKeytrack[num] = subKeytrack[num]->value(); break;
+				case 33: ps->subSampLen[num] = subSampLen[num]->value(); break;
+				case 34: ps->subNoise[num] = subNoise[num]->value(); break;
+				case 35: ps->modIn[num] = modIn[num]->value(); break;
+				case 36: ps->modInNum[num] = modInNum[num]->value(); break;
+				case 37: ps->modInOtherNum[num] = modInOtherNum[num]->value(); break;
+				case 38: ps->modInAmnt[num] = modInAmnt[num]->value(); break;
+				case 39: ps->modInCurve[num] = modInCurve[num]->value(); break;
+				case 40: ps->modIn2[num] = modIn2[num]->value(); break;
+				case 41: ps->modInNum2[num] = modInNum2[num]->value(); break;
+				case 42: ps->modInOtherNum2[num] = modInOtherNum2[num]->value(); break;
+				case 43: ps->modInAmnt2[num] = modInAmnt2[num]->value(); break;
+				case 44: ps->modInCurve2[num] = modInCurve2[num]->value(); break;
+				case 45: ps->modOutSec[num] = modOutSec[num]->value(); break;
+				case 46: ps->modOutSig[num] = modOutSig[num]->value(); break;
+				case 47: ps->modOutSecNum[num] = modOutSecNum[num]->value(); break;
+				case 48: ps->enabled[num] = enabled[num]->value(); break;
+				case 49: ps->modEnabled[num] = modEnabled[num]->value(); break;
+				case 50: ps->modCombineType[num] = modCombineType[num]->value(); break;
+				case 57: ps->muted[num] = muted[num]->value(); break;
+				case 59: ps->sampleEnabled[num] = sampleEnabled[num]->value(); break;
+				case 60: ps->sampleGraphEnabled[num] = sampleGraphEnabled[num]->value(); break;
+				case 61: ps->sampleMuted[num] = sampleMuted[num]->value(); break;
+				case 62: ps->sampleKeytracking[num] = sampleKeytracking[num]->value(); break;
+				case 63: ps->sampleLoop[num] = sampleLoop[num]->value(); break;
+				case 64: ps->sampleVolume[num] = sampleVolume[num]->value(); break;
+				case 65: ps->samplePanning[num] = samplePanning[num]->value(); break;
+				case 66: ps->sampleDetune[num] = sampleDetune[num]->value(); break;
+				case 67: ps->samplePhase[num] = samplePhase[num]->value(); break;
+				case 68: ps->samplePhaseRand[num] = samplePhaseRand[num]->value(); break;
+				case 69: ps->filtFeedback[num] = filtFeedback[num]->value(); break;
+				case 70: ps->filtDetune[num] = filtDetune[num]->value(); break;
+				case 71: ps->filtKeytracking[num] = filtKeytracking[num]->value(); break;
+				case 72: ps->subPanning[num] = subPanning[num]->value(); break;
+				case 73: ps->sampleStart[num] = sampleStart[num]->value(); break;
+				case 74: ps->sampleEnd[num] = sampleEnd[num]->value(); break;
+				case 75: ps->pan[num] = pan[num]->value(); break;
+				case 76: ps->subTempo[num] = subTempo[num]->value(); break;
+				case 77: ps->modType[num] = modType[num]->value(); break;
+				case 78: ps->macro[num] = macro[num]->value(); break;
+				case 79: ps->filtMuted[num] = filtMuted[num]->value(); break;
+				case 80: ps->phaseRand[num] = phaseRand[num]->value(); break;
+			}
 		}
 	}
 }
@@ -1154,8 +1162,7 @@ void Microwave::switchMatrixSections( int source, int destination )
 
 
 // For when notes are playing.  This initializes a new mSynth if the note is new.  It also uses mSynth::nextStringSample to get the synthesizer output.  This is where oversampling and the visualizer are handled.
-void Microwave::playNote( NotePlayHandle * _n,
-						sampleFrame * _working_buffer )
+void Microwave::playNote( NotePlayHandle * _n, sampleFrame * _working_buffer )
 {
 
 	if ( _n->m_pluginData == NULL || _n->totalFramesPlayed() == 0 )
@@ -1261,56 +1268,82 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 	matrixBoxesLabel->setPixmap(matrixBoxesImg);
 	matrixBoxesLabel->setAttribute( Qt::WA_TransparentForMouseEvents );
 
+
+	morphKnob = new Knob( knobMicrowave, this );
+	morphKnob->setHintText( tr( "Morph" ), "" );
+
+	rangeKnob = new Knob( knobMicrowave, this );
+	rangeKnob->setHintText( tr( "Range" ), "" );
+
+	sampLenKnob = new Knob( knobMicrowave, this );
+	sampLenKnob->setHintText( tr( "Waveform Sample Length" ), "" );
+
+	morphMaxKnob = new Knob( knobMicrowave, this );
+	morphMaxKnob->setHintText( tr( "Morph Max" ), "" );
+
+	modifyKnob = new Knob( knobMicrowave, this );
+	modifyKnob->setHintText( tr( "Modify" ), "" );
+
+	unisonVoicesKnob = new Knob( knobSmallMicrowave, this );
+	unisonVoicesKnob->setHintText( tr( "Unison Voices" ), "" );
+
+	unisonDetuneKnob = new Knob( knobSmallMicrowave, this );
+	unisonDetuneKnob->setHintText( tr( "Unison Detune" ), "" );
+
+	unisonMorphKnob = new Knob( knobSmallMicrowave, this );
+	unisonMorphKnob->setHintText( tr( "Unison Morph" ), "" );
+
+	unisonModifyKnob = new Knob( knobSmallMicrowave, this );
+	unisonModifyKnob->setHintText( tr( "Unison Modify" ), "" );
+
+	detuneKnob = new Knob( knobSmallMicrowave, this );
+	detuneKnob->setHintText( tr( "Detune" ), "" );
+
+	phaseKnob = new Knob( knobSmallMicrowave, this );
+	phaseKnob->setHintText( tr( "Phase" ), "" );
+
+	phaseRandKnob = new Knob( knobSmallMicrowave, this );
+	phaseRandKnob->setHintText( tr( "Phase Randomness" ), "" );
+
+	volKnob = new Knob( knobMicrowave, this );
+	volKnob->setHintText( tr( "Volume" ), "" );
+
+	modifyModeBox = new ComboBox( this );
+	modifyModeBox->setGeometry( 0, 5, 42, 22 );
+	modifyModeBox->setFont( pointSize<8>( modifyModeBox->font() ) );
+
+	enabledToggle = new LedCheckBox( "", this, tr( "Oscillator Enabled" ), LedCheckBox::Green );
+
+	mutedToggle = new LedCheckBox( "", this, tr( "Oscillator Muted" ), LedCheckBox::Green );
+
+	panKnob = new Knob( knobMicrowave, this );
+	panKnob->setHintText( tr( "Panning" ), "" );
+
+
+	sampleEnabledToggle = new LedCheckBox( "", this, tr( "Sample Enabled" ), LedCheckBox::Green );
+	sampleGraphEnabledToggle = new LedCheckBox( "", this, tr( "Sample Graph Enabled" ), LedCheckBox::Green );
+	sampleMutedToggle = new LedCheckBox( "", this, tr( "Sample Muted" ), LedCheckBox::Green );
+	sampleKeytrackingToggle = new LedCheckBox( "", this, tr( "Sample Keytracking" ), LedCheckBox::Green );
+	sampleLoopToggle = new LedCheckBox( "", this, tr( "Loop Sample" ), LedCheckBox::Green );
+
+	sampleVolumeKnob = new Knob( knobMicrowave, this );
+	sampleVolumeKnob->setHintText( tr( "Volume" ), "" );
+	samplePanningKnob = new Knob( knobMicrowave, this );
+	samplePanningKnob->setHintText( tr( "Panning" ), "" );
+	sampleDetuneKnob = new Knob( knobSmallMicrowave, this );
+	sampleDetuneKnob->setHintText( tr( "Detune" ), "" );
+	samplePhaseKnob = new Knob( knobSmallMicrowave, this );
+	samplePhaseKnob->setHintText( tr( "Phase" ), "" );
+	samplePhaseRandKnob = new Knob( knobSmallMicrowave, this );
+	samplePhaseRandKnob->setHintText( tr( "Phase Randomness" ), "" );
+	sampleStartKnob = new Knob( knobSmallMicrowave, this );
+	sampleStartKnob->setHintText( tr( "Start" ), "" );
+	sampleEndKnob = new Knob( knobSmallMicrowave, this );
+	sampleEndKnob->setHintText( tr( "End" ), "" );
+
+
 	for( int i = 0; i < 8; ++i )
 	{
-		morphKnob[i] = new Knob( knobMicrowave, this );
-		morphKnob[i]->setHintText( tr( "Morph" ), "" );
-	
-		rangeKnob[i] = new Knob( knobMicrowave, this );
-		rangeKnob[i]->setHintText( tr( "Range" ), "" );
-
-		sampLenKnob[i] = new Knob( knobMicrowave, this );
-		sampLenKnob[i]->setHintText( tr( "Waveform Sample Length" ), "" );
-
-		morphMaxKnob[i] = new Knob( knobMicrowave, this );
-		morphMaxKnob[i]->setHintText( tr( "Morph Max" ), "" );
-
-		modifyKnob[i] = new Knob( knobMicrowave, this );
-		modifyKnob[i]->setHintText( tr( "Modify" ), "" );
-
-		unisonVoicesKnob[i] = new Knob( knobSmallMicrowave, this );
-		unisonVoicesKnob[i]->setHintText( tr( "Unison Voices" ), "" );
-
-		unisonDetuneKnob[i] = new Knob( knobSmallMicrowave, this );
-		unisonDetuneKnob[i]->setHintText( tr( "Unison Detune" ), "" );
-
-		unisonMorphKnob[i] = new Knob( knobSmallMicrowave, this );
-		unisonMorphKnob[i]->setHintText( tr( "Unison Morph" ), "" );
-
-		unisonModifyKnob[i] = new Knob( knobSmallMicrowave, this );
-		unisonModifyKnob[i]->setHintText( tr( "Unison Modify" ), "" );
-
-		detuneKnob[i] = new Knob( knobSmallMicrowave, this );
-		detuneKnob[i]->setHintText( tr( "Detune" ), "" );
-
-		phaseKnob[i] = new Knob( knobSmallMicrowave, this );
-		phaseKnob[i]->setHintText( tr( "Phase" ), "" );
-
-		phaseRandKnob[i] = new Knob( knobSmallMicrowave, this );
-		phaseRandKnob[i]->setHintText( tr( "Phase Randomness" ), "" );
-
-		volKnob[i] = new Knob( knobMicrowave, this );
-		volKnob[i]->setHintText( tr( "Volume" ), "" );
-
-		modifyModeBox[i] = new ComboBox( this );
-		modifyModeBox[i]->setGeometry( 0, 5, 42, 22 );
-		modifyModeBox[i]->setFont( pointSize<8>( modifyModeBox[i]->font() ) );
-
-		enabledToggle[i] = new LedCheckBox( "", this, tr( "Oscillator Enabled" ), LedCheckBox::Green );
-
-		mutedToggle[i] = new LedCheckBox( "", this, tr( "Oscillator Muted" ), LedCheckBox::Green );
-
-
 		filtInVolKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtInVolKnob[i]->setHintText( tr( "Input Volume" ), "" );
 
@@ -1355,113 +1388,41 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 		filtMutedToggle[i] = new LedCheckBox( "", this, tr( "Muted" ), LedCheckBox::Green );
 
-		sampleEnabledToggle[i] = new LedCheckBox( "", this, tr( "Sample Enabled" ), LedCheckBox::Green );
-		sampleGraphEnabledToggle[i] = new LedCheckBox( "", this, tr( "Sample Graph Enabled" ), LedCheckBox::Green );
-		sampleMutedToggle[i] = new LedCheckBox( "", this, tr( "Sample Muted" ), LedCheckBox::Green );
-		sampleKeytrackingToggle[i] = new LedCheckBox( "", this, tr( "Sample Keytracking" ), LedCheckBox::Green );
-		sampleLoopToggle[i] = new LedCheckBox( "", this, tr( "Loop Sample" ), LedCheckBox::Green );
-
-		sampleVolumeKnob[i] = new Knob( knobMicrowave, this );
-		sampleVolumeKnob[i]->setHintText( tr( "Volume" ), "" );
-		samplePanningKnob[i] = new Knob( knobMicrowave, this );
-		samplePanningKnob[i]->setHintText( tr( "Panning" ), "" );
-		sampleDetuneKnob[i] = new Knob( knobSmallMicrowave, this );
-		sampleDetuneKnob[i]->setHintText( tr( "Detune" ), "" );
-		samplePhaseKnob[i] = new Knob( knobSmallMicrowave, this );
-		samplePhaseKnob[i]->setHintText( tr( "Phase" ), "" );
-		samplePhaseRandKnob[i] = new Knob( knobSmallMicrowave, this );
-		samplePhaseRandKnob[i]->setHintText( tr( "Phase Randomness" ), "" );
-		sampleStartKnob[i] = new Knob( knobSmallMicrowave, this );
-		sampleStartKnob[i]->setHintText( tr( "Start" ), "" );
-		sampleEndKnob[i] = new Knob( knobSmallMicrowave, this );
-		sampleEndKnob[i]->setHintText( tr( "End" ), "" );
-
-		panKnob[i] = new Knob( knobMicrowave, this );
-		panKnob[i]->setHintText( tr( "Panning" ), "" );
-
-		if( i != 0 )
-		{
-			morphKnob[i]->hide();
-			rangeKnob[i]->hide();
-			sampLenKnob[i]->hide();
-			morphMaxKnob[i]->hide();
-			modifyKnob[i]->hide();
-			unisonVoicesKnob[i]->hide();
-			unisonDetuneKnob[i]->hide();
-			unisonMorphKnob[i]->hide();
-			unisonModifyKnob[i]->hide();
-			detuneKnob[i]->hide();
-			phaseKnob[i]->hide();
-			phaseRandKnob[i]->hide();
-			modifyModeBox[i]->hide();
-			volKnob[i]->hide();
-			enabledToggle[i]->hide();
-			mutedToggle[i]->hide();
-			sampleEnabledToggle[i]->hide();
-			sampleGraphEnabledToggle[i]->hide();
-			sampleMutedToggle[i]->hide();
-			sampleKeytrackingToggle[i]->hide();
-			sampleLoopToggle[i]->hide();
-			sampleVolumeKnob[i]->hide();
-			samplePanningKnob[i]->hide();
-			sampleDetuneKnob[i]->hide();
-			samplePhaseKnob[i]->hide();
-			samplePhaseRandKnob[i]->hide();
-			sampleStartKnob[i]->hide();
-			sampleEndKnob[i]->hide();
-			panKnob[i]->hide();
-		}
-
 		macroKnob[i] = new Knob( knobMicrowave, this );
 		macroKnob[i]->setHintText( tr( "Macro" ) + " " + QString::number(i), "" );
 	}
 
-	for( int i = 0; i < 64; ++i )
+	subVolKnob = new Knob( knobMicrowave, this );
+	subVolKnob->setHintText( tr( "Sub Oscillator Volume" ), "" );
+
+	subEnabledToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Enabled" ), LedCheckBox::Green );
+
+	subPhaseKnob = new Knob( knobSmallMicrowave, this );
+	subPhaseKnob->setHintText( tr( "Sub Oscillator Phase" ), "" );
+
+	subPhaseRandKnob = new Knob( knobSmallMicrowave, this );
+	subPhaseRandKnob->setHintText( tr( "Sub Oscillator Phase Randomness" ), "" );
+
+	subDetuneKnob = new Knob( knobMicrowave, this );
+	subDetuneKnob->setHintText( tr( "Sub Oscillator Pitch" ), "" );
+
+	subMutedToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Muted" ), LedCheckBox::Green );
+
+	subKeytrackToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Keytracking Enabled" ), LedCheckBox::Green );
+
+	subSampLenKnob = new Knob( knobMicrowave, this );
+	subSampLenKnob->setHintText( tr( "Sub Oscillator Sample Length" ), "" );
+
+	subNoiseToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Noise Enabled" ), LedCheckBox::Green );
+
+	subPanningKnob = new Knob( knobMicrowave, this );
+	subPanningKnob->setHintText( tr( "Sub Oscillator Panning" ), "" );
+
+	subTempoKnob = new Knob( knobMicrowave, this );
+	subTempoKnob->setHintText( tr( "Sub Oscillator Tempo" ), "" );
+
+	for( int i = 0; i < 8; ++i )
 	{
-		subEnabledToggle[i] = new LedCheckBox( "", this, tr( "Sub Oscillator Enabled" ), LedCheckBox::Green );
-
-		subVolKnob[i] = new Knob( knobMicrowave, this );
-		subVolKnob[i]->setHintText( tr( "Sub Oscillator Volume" ), "" );
-
-		subPhaseKnob[i] = new Knob( knobSmallMicrowave, this );
-		subPhaseKnob[i]->setHintText( tr( "Sub Oscillator Phase" ), "" );
-
-		subPhaseRandKnob[i] = new Knob( knobSmallMicrowave, this );
-		subPhaseRandKnob[i]->setHintText( tr( "Sub Oscillator Phase Randomness" ), "" );
-
-		subDetuneKnob[i] = new Knob( knobMicrowave, this );
-		subDetuneKnob[i]->setHintText( tr( "Sub Oscillator Pitch" ), "" );
-
-		subMutedToggle[i] = new LedCheckBox( "", this, tr( "Sub Oscillator Muted" ), LedCheckBox::Green );
-
-		subKeytrackToggle[i] = new LedCheckBox( "", this, tr( "Sub Oscillator Keytracking Enabled" ), LedCheckBox::Green );
-
-		subSampLenKnob[i] = new Knob( knobMicrowave, this );
-		subSampLenKnob[i]->setHintText( tr( "Sub Oscillator Sample Length" ), "" );
-
-		subNoiseToggle[i] = new LedCheckBox( "", this, tr( "Sub Oscillator Noise Enabled" ), LedCheckBox::Green );
-
-		subPanningKnob[i] = new Knob( knobMicrowave, this );
-		subPanningKnob[i]->setHintText( tr( "Sub Oscillator Panning" ), "" );
-
-		subTempoKnob[i] = new Knob( knobMicrowave, this );
-		subTempoKnob[i]->setHintText( tr( "Sub Oscillator Tempo" ), "" );
-
-		if( i != 0 )
-		{
-			subEnabledToggle[i]->hide();
-			subVolKnob[i]->hide();
-			subPhaseKnob[i]->hide();
-			subPhaseRandKnob[i]->hide();
-			subDetuneKnob[i]->hide();
-			subMutedToggle[i]->hide();
-			subKeytrackToggle[i]->hide();
-			subSampLenKnob[i]->hide();
-			subNoiseToggle[i]->hide();
-			subPanningKnob[i]->hide();
-			subTempoKnob[i]->hide();
-		}
-
 		modOutSecBox[i] = new ComboBox( this );
 		modOutSecBox[i]->setGeometry( 2000, 5, 42, 22 );
 		modOutSecBox[i]->setFont( pointSize<8>( modOutSecBox[i]->font() ) );
@@ -1751,9 +1712,9 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 	manualBtn = new PixmapButton( this, tr( "Manual" ) );
 	manualBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sinwave" ) );
+						"manual_active" ) );
 	manualBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sinwave" ) );
+						"manual_inactive" ) );
 	ToolTip::add( manualBtn,
 			tr( "Manual" ) );
 
@@ -1901,7 +1862,7 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 	connect( manualBtn, SIGNAL (clicked ( bool ) ), this, SLOT ( manualBtnClicked() ) );
 
-	for( int i = 0; i < 64; ++i )
+	for( int i = 0; i < 8; ++i )
 	{
 		connect( castModel<Microwave>()->modOutSec[i], &ComboBoxModel::dataChanged, this, [this, i]() { modOutSecChanged(i); }, Qt::DirectConnection );
 		connect( castModel<Microwave>()->modIn[i], &ComboBoxModel::dataChanged, this, [this, i]() { modInChanged(i); }, Qt::DirectConnection );
@@ -1922,24 +1883,6 @@ void MicrowaveView::modelChanged()
 
 	for( int i = 0; i < 8; ++i )
 	{
-		morphKnob[i]->setModel( b->morph[i] );
-		rangeKnob[i]->setModel( b->range[i] );
-		sampLenKnob[i]->setModel( b->sampLen[i] );
-		modifyKnob[i]->setModel( b->modify[i] );
-		morphMaxKnob[i]->setModel( b->morphMax[i] );
-		unisonVoicesKnob[i]->setModel( b->unisonVoices[i] );
-		unisonDetuneKnob[i]->setModel( b->unisonDetune[i] );
-		unisonMorphKnob[i]->setModel( b->unisonMorph[i] );
-		unisonModifyKnob[i]->setModel( b->unisonModify[i] );
-		detuneKnob[i]->setModel( b->detune[i] );
-		modifyModeBox[i]-> setModel( b-> modifyMode[i] );
-		phaseKnob[i]->setModel( b->phase[i] );
-		phaseRandKnob[i]->setModel( b->phaseRand[i] );
-		volKnob[i]->setModel( b->vol[i] );
-		enabledToggle[i]->setModel( b->enabled[i] );
-		mutedToggle[i]->setModel( b->muted[i] );
-		panKnob[i]->setModel( b->pan[i] );
-
 		filtInVolKnob[i]->setModel( b->filtInVol[i] );
 		filtTypeBox[i]->setModel( b->filtType[i] );
 		filtSlopeBox[i]->setModel( b->filtSlope[i] );
@@ -1956,58 +1899,7 @@ void MicrowaveView::modelChanged()
 		filtKeytrackingToggle[i]->setModel( b->filtKeytracking[i] );
 		filtMutedToggle[i]->setModel( b->filtMuted[i] );
 
-		sampleEnabledToggle[i]->setModel( b->sampleEnabled[i] );
-		sampleGraphEnabledToggle[i]->setModel( b->sampleGraphEnabled[i] );
-		sampleMutedToggle[i]->setModel( b->sampleMuted[i] );
-		sampleKeytrackingToggle[i]->setModel( b->sampleKeytracking[i] );
-		sampleLoopToggle[i]->setModel( b->sampleLoop[i] );
-
-		sampleVolumeKnob[i]->setModel( b->sampleVolume[i] );
-		samplePanningKnob[i]->setModel( b->samplePanning[i] );
-		sampleDetuneKnob[i]->setModel( b->sampleDetune[i] );
-		samplePhaseKnob[i]->setModel( b->samplePhase[i] );
-		samplePhaseRandKnob[i]->setModel( b->samplePhaseRand[i] );
-		sampleStartKnob[i]->setModel( b->sampleStart[i] );
-		sampleEndKnob[i]->setModel( b->sampleEnd[i] );
-
 		macroKnob[i]->setModel( b->macro[i] );
-
-	}
-
-	for( int i = 0; i < 64; ++i )
-	{
-		subEnabledToggle[i]->setModel( b->subEnabled[i] );
-		subVolKnob[i]->setModel( b->subVol[i] );
-		subPhaseKnob[i]->setModel( b->subPhase[i] );
-		subPhaseRandKnob[i]->setModel( b->subPhaseRand[i] );
-		subDetuneKnob[i]->setModel( b->subDetune[i] );
-		subMutedToggle[i]->setModel( b->subMuted[i] );
-		subKeytrackToggle[i]->setModel( b->subKeytrack[i] );
-		subSampLenKnob[i]->setModel( b->subSampLen[i] );
-		subNoiseToggle[i]->setModel( b->subNoise[i] );
-		subPanningKnob[i]->setModel( b->subPanning[i] );
-		subTempoKnob[i]->setModel( b->subTempo[i] );
-
-		modOutSecBox[i]-> setModel( b-> modOutSec[i] );
-		modOutSigBox[i]-> setModel( b-> modOutSig[i] );
-		modOutSecNumBox[i]-> setModel( b-> modOutSecNum[i] );
-
-		modInBox[i]-> setModel( b-> modIn[i] );
-		modInNumBox[i]-> setModel( b-> modInNum[i] );
-		modInOtherNumBox[i]-> setModel( b-> modInOtherNum[i] );
-		modInAmntKnob[i]-> setModel( b-> modInAmnt[i] );
-		modInCurveKnob[i]-> setModel( b-> modInCurve[i] );
-
-		modInBox2[i]-> setModel( b-> modIn2[i] );
-		modInNumBox2[i]-> setModel( b-> modInNum2[i] );
-		modInOtherNumBox2[i]-> setModel( b-> modInOtherNum2[i] );
-		modInAmntKnob2[i]-> setModel( b-> modInAmnt2[i] );
-		modInCurveKnob2[i]-> setModel( b-> modInCurve2[i] );
-
-		modEnabledToggle[i]-> setModel( b-> modEnabled[i] );
-
-		modCombineTypeBox[i]-> setModel( b-> modCombineType[i] );
-		modTypeToggle[i]-> setModel( b-> modType[i] );
 	}
 
 	graph->setModel( &b->graph );
@@ -2045,26 +1937,41 @@ void MicrowaveView::updateScroll()
 	int subIsFlipped = subFlipped * 500.f;
 	int subIsNotFlipped = !subFlipped * 500.f;
 
+	morphKnob->move( 23 - scrollVal, 172 + mainIsFlipped );
+	rangeKnob->move( 55 - scrollVal, 172 + mainIsFlipped );
+	sampLenKnob->move( 23 - scrollVal, 172 + mainIsNotFlipped );
+	morphMaxKnob->move( 55 - scrollVal, 172 + mainIsNotFlipped );
+	modifyKnob->move( 87 - scrollVal, 172 + mainIsFlipped );
+	modifyModeBox->move( 127 - scrollVal, 186 + mainIsFlipped );
+	unisonVoicesKnob->move( 184 - scrollVal, 172 + mainIsFlipped );
+	unisonDetuneKnob->move( 209 - scrollVal, 172 + mainIsFlipped );
+	unisonMorphKnob->move( 184 - scrollVal, 203 + mainIsFlipped );
+	unisonModifyKnob->move( 209 - scrollVal, 203 + mainIsFlipped );
+	detuneKnob->move( 152 - scrollVal, 216 + mainIsFlipped );
+	phaseKnob->move( 86 - scrollVal, 216 + mainIsNotFlipped );
+	phaseRandKnob->move( 113 - scrollVal, 216 + mainIsNotFlipped );
+	volKnob->move( 87 - scrollVal, 172 + mainIsNotFlipped );
+	enabledToggle->move( 95 - scrollVal, 220 + mainIsFlipped );
+	mutedToggle->move( 129 - scrollVal, 220 + mainIsFlipped );
+	panKnob->move( 55 - scrollVal, 130 + mainIsNotFlipped );
+
+
+	sampleEnabledToggle->move( 86 + 500 - scrollVal, 229 );
+	sampleGraphEnabledToggle->move( 138 + 500 - scrollVal, 229 );
+	sampleMutedToggle->move( 103 + 500 - scrollVal, 229 );
+	sampleKeytrackingToggle->move( 121 + 500 - scrollVal, 229 );
+	sampleLoopToggle->move( 155 + 500 - scrollVal, 229 );
+
+	sampleVolumeKnob->move( 23 + 500 - scrollVal, 172 );
+	samplePanningKnob->move( 55 + 500 - scrollVal, 172 );
+	sampleDetuneKnob->move( 93 + 500 - scrollVal, 172 );
+	samplePhaseKnob->move( 180 + 500 - scrollVal, 172 );
+	samplePhaseRandKnob->move( 206 + 500 - scrollVal, 172 );
+	sampleStartKnob->move( 121 + 500 - scrollVal, 172 );
+	sampleEndKnob->move( 145 + 500 - scrollVal, 172 );
+
 	for( int i = 0; i < 8; ++i )
 	{
-		morphKnob[i]->move( 23 - scrollVal, 172 + mainIsFlipped );
-		rangeKnob[i]->move( 55 - scrollVal, 172 + mainIsFlipped );
-		sampLenKnob[i]->move( 23 - scrollVal, 172 + mainIsNotFlipped );
-		morphMaxKnob[i]->move( 55 - scrollVal, 172 + mainIsNotFlipped );
-		modifyKnob[i]->move( 87 - scrollVal, 172 + mainIsFlipped );
-		modifyModeBox[i]->move( 127 - scrollVal, 186 + mainIsFlipped );
-		unisonVoicesKnob[i]->move( 184 - scrollVal, 172 + mainIsFlipped );
-		unisonDetuneKnob[i]->move( 209 - scrollVal, 172 + mainIsFlipped );
-		unisonMorphKnob[i]->move( 184 - scrollVal, 203 + mainIsFlipped );
-		unisonModifyKnob[i]->move( 209 - scrollVal, 203 + mainIsFlipped );
-		detuneKnob[i]->move( 152 - scrollVal, 216 + mainIsFlipped );
-		phaseKnob[i]->move( 86 - scrollVal, 216 + mainIsNotFlipped );
-		phaseRandKnob[i]->move( 113 - scrollVal, 216 + mainIsNotFlipped );
-		volKnob[i]->move( 87 - scrollVal, 172 + mainIsNotFlipped );
-		enabledToggle[i]->move( 95 - scrollVal, 220 + mainIsFlipped );
-		mutedToggle[i]->move( 129 - scrollVal, 220 + mainIsFlipped );
-		panKnob[i]->move( 55 - scrollVal, 130 + mainIsNotFlipped );
-
 		filtInVolKnob[i]->move( 30 + 1000 - scrollVal, i*92+91 - effectScrollVal );
 		filtTypeBox[i]->move( 128 + 1000 - scrollVal, i*92+63 - effectScrollVal );
 		filtSlopeBox[i]->move( 171 + 1000 - scrollVal, i*92+63 - effectScrollVal );
@@ -2080,55 +1987,69 @@ void MicrowaveView::updateScroll()
 		filtDetuneKnob[i]->move( 192 + 1000 - scrollVal, i*92+91 - effectScrollVal );
 		filtKeytrackingToggle[i]->move( 199 + 1000 - scrollVal, i*92+35 - effectScrollVal );
 		filtMutedToggle[i]->move( 169 + 1000 - scrollVal, i*92+35 - effectScrollVal );
-
-		sampleEnabledToggle[i]->move( 86 + 500 - scrollVal, 229 );
-		sampleGraphEnabledToggle[i]->move( 138 + 500 - scrollVal, 229 );
-		sampleMutedToggle[i]->move( 103 + 500 - scrollVal, 229 );
-		sampleKeytrackingToggle[i]->move( 121 + 500 - scrollVal, 229 );
-		sampleLoopToggle[i]->move( 155 + 500 - scrollVal, 229 );
-
-		sampleVolumeKnob[i]->move( 23 + 500 - scrollVal, 172 );
-		samplePanningKnob[i]->move( 55 + 500 - scrollVal, 172 );
-		sampleDetuneKnob[i]->move( 93 + 500 - scrollVal, 172 );
-		samplePhaseKnob[i]->move( 180 + 500 - scrollVal, 172 );
-		samplePhaseRandKnob[i]->move( 206 + 500 - scrollVal, 172 );
-		sampleStartKnob[i]->move( 121 + 500 - scrollVal, 172 );
-		sampleEndKnob[i]->move( 145 + 500 - scrollVal, 172 );
 	}
 
-	for( int i = 0; i < 64; ++i )
+	subVolKnob->move( 23 + 250 - scrollVal, 172 + subIsFlipped );
+	subEnabledToggle->move( 108 + 250 - scrollVal, 214 + subIsFlipped );
+	subPhaseKnob->move( 180 + 250 - scrollVal, 172 + subIsFlipped );
+	subPhaseRandKnob->move( 206 + 250 - scrollVal, 172 + subIsFlipped );
+	subDetuneKnob->move( 95 + 250 - scrollVal, 172 + subIsFlipped );
+	subMutedToggle->move( 147 + 250 - scrollVal, 214 + subIsFlipped );
+	subKeytrackToggle->move( 108 + 250 - scrollVal, 229 + subIsFlipped );
+	subSampLenKnob->move( 130 + 250 - scrollVal, 172 + subIsFlipped );
+	subNoiseToggle->move( 147 + 250 - scrollVal, 229 + subIsFlipped );
+	subPanningKnob->move( 55 + 250 - scrollVal, 172 + subIsFlipped );
+	subTempoKnob->move( 35 + 250 - scrollVal, 172 + subIsNotFlipped );
+
+	for( int i = 0; i < 8; ++i )
 	{
-		subEnabledToggle[i]->move( 108 + 250 - scrollVal, 214 + subIsFlipped );
-		subVolKnob[i]->move( 23 + 250 - scrollVal, 172 + subIsFlipped );
-		subPhaseKnob[i]->move( 180 + 250 - scrollVal, 172 + subIsFlipped );
-		subPhaseRandKnob[i]->move( 206 + 250 - scrollVal, 172 + subIsFlipped );
-		subDetuneKnob[i]->move( 95 + 250 - scrollVal, 172 + subIsFlipped );
-		subMutedToggle[i]->move( 147 + 250 - scrollVal, 214 + subIsFlipped );
-		subKeytrackToggle[i]->move( 108 + 250 - scrollVal, 229 + subIsFlipped );
-		subSampLenKnob[i]->move( 130 + 250 - scrollVal, 172 + subIsFlipped );
-		subNoiseToggle[i]->move( 147 + 250 - scrollVal, 229 + subIsFlipped );
-		subPanningKnob[i]->move( 55 + 250 - scrollVal, 172 + subIsFlipped );
-		subTempoKnob[i]->move( 35 + 250 - scrollVal, 172 + subIsNotFlipped );
+		int matrixRemainder = modScrollVal % 460;
+		int matrixDivide = modScrollVal / 460 * 4;
 
-		modInBox[i]->move( 43 + 750 - scrollVal, i*115+57 - modScrollVal );
-		modInNumBox[i]->move( 88 + 750 - scrollVal, i*115+57 - modScrollVal );
-		modInOtherNumBox[i]->move( 122 + 750 - scrollVal, i*115+57 - modScrollVal );
-		modInAmntKnob[i]->move( 167 + 750 - scrollVal, i*115+53 - modScrollVal );
-		modInCurveKnob[i]->move( 192 + 750 - scrollVal, i*115+53 - modScrollVal );
-		modOutSecBox[i]->move( 27 + 750 - scrollVal, i*115+88 - modScrollVal );
-		modOutSigBox[i]->move( 69 + 750 - scrollVal, i*115+88 - modScrollVal );
-		modOutSecNumBox[i]->move( 112 + 750 - scrollVal, i*115+88 - modScrollVal );
-		modInBox2[i]->move( 43 + 750 - scrollVal, i*115+118 - modScrollVal );
-		modInNumBox2[i]->move( 88 + 750 - scrollVal, i*115+118 - modScrollVal );
-		modInOtherNumBox2[i]->move( 122 + 750 - scrollVal, i*115+118 - modScrollVal );
-		modInAmntKnob2[i]->move( 167 + 750 - scrollVal, i*115+114 - modScrollVal );
-		modInCurveKnob2[i]->move( 192 + 750 - scrollVal, i*115+114 - modScrollVal );
-		modEnabledToggle[i]->move( 27 + 750 - scrollVal, i*115+36 - modScrollVal );
-		modCombineTypeBox[i]->move( 149 + 750 - scrollVal, i*115+88 - modScrollVal );
-		modTypeToggle[i]->move( 195 + 750 - scrollVal, i*115+98 - modScrollVal );
+		modInBox[i]->move( 43 + 750 - scrollVal, i*115+57 - matrixRemainder );
+		modInNumBox[i]->move( 88 + 750 - scrollVal, i*115+57 - matrixRemainder );
+		modInOtherNumBox[i]->move( 122 + 750 - scrollVal, i*115+57 - matrixRemainder );
+		modInAmntKnob[i]->move( 167 + 750 - scrollVal, i*115+53 - matrixRemainder );
+		modInCurveKnob[i]->move( 192 + 750 - scrollVal, i*115+53 - matrixRemainder );
+		modOutSecBox[i]->move( 27 + 750 - scrollVal, i*115+88 - matrixRemainder );
+		modOutSigBox[i]->move( 69 + 750 - scrollVal, i*115+88 - matrixRemainder );
+		modOutSecNumBox[i]->move( 112 + 750 - scrollVal, i*115+88 - matrixRemainder );
+		modInBox2[i]->move( 43 + 750 - scrollVal, i*115+118 - matrixRemainder );
+		modInNumBox2[i]->move( 88 + 750 - scrollVal, i*115+118 - matrixRemainder );
+		modInOtherNumBox2[i]->move( 122 + 750 - scrollVal, i*115+118 - matrixRemainder );
+		modInAmntKnob2[i]->move( 167 + 750 - scrollVal, i*115+114 - matrixRemainder );
+		modInCurveKnob2[i]->move( 192 + 750 - scrollVal, i*115+114 - matrixRemainder );
+		modEnabledToggle[i]->move( 27 + 750 - scrollVal, i*115+36 - matrixRemainder );
+		modCombineTypeBox[i]->move( 149 + 750 - scrollVal, i*115+88 - matrixRemainder );
+		modTypeToggle[i]->move( 195 + 750 - scrollVal, i*115+98 - matrixRemainder );
 
-		modUpArrow[i]->move( 181 + 750 - scrollVal, i*115+37 - modScrollVal );
-		modDownArrow[i]->move( 199 + 750 - scrollVal, i*115+37 - modScrollVal );
+		modUpArrow[i]->move( 181 + 750 - scrollVal, i*115+37 - matrixRemainder );
+		modDownArrow[i]->move( 199 + 750 - scrollVal, i*115+37 - matrixRemainder );
+
+
+		if( i+matrixDivide < 64 )
+		{
+			modOutSecBox[i]->setModel( b->modOutSec[i+matrixDivide] );
+			modOutSigBox[i]->setModel( b->modOutSig[i+matrixDivide] );
+			modOutSecNumBox[i]->setModel( b->modOutSecNum[i+matrixDivide] );
+
+			modInBox[i]->setModel( b->modIn[i+matrixDivide] );
+			modInNumBox[i]->setModel( b->modInNum[i+matrixDivide] );
+			modInOtherNumBox[i]->setModel( b->modInOtherNum[i+matrixDivide] );
+			modInAmntKnob[i]->setModel( b->modInAmnt[i+matrixDivide] );
+			modInCurveKnob[i]->setModel( b->modInCurve[i+matrixDivide] );
+
+			modInBox2[i]->setModel( b->modIn2[i+matrixDivide] );
+			modInNumBox2[i]->setModel( b->modInNum2[i+matrixDivide] );
+			modInOtherNumBox2[i]->setModel( b->modInOtherNum2[i+matrixDivide] );
+			modInAmntKnob2[i]->setModel( b->modInAmnt2[i+matrixDivide] );
+			modInCurveKnob2[i]->setModel( b->modInCurve2[i+matrixDivide] );
+
+			modEnabledToggle[i]->setModel( b->modEnabled[i+matrixDivide] );
+
+			modCombineTypeBox[i]->setModel( b->modCombineType[i+matrixDivide] );
+			modTypeToggle[i]->setModel( b->modType[i+matrixDivide] );
+		}
 	}
 
 	visvolKnob->move( 230 - scrollVal, 24 );
@@ -2246,46 +2167,27 @@ void MicrowaveView::wheelEvent( QWheelEvent * _me )
 // Trades out the GUI elements when switching between oscillators
 void MicrowaveView::mainNumChanged()
 {
-	for( int i = 0; i < 8; ++i )
-	{
-		morphKnob[i]->hide();
-		rangeKnob[i]->hide();
-		sampLenKnob[i]->hide();
-		morphMaxKnob[i]->hide();
-		modifyKnob[i]->hide();
-		unisonVoicesKnob[i]->hide();
-		unisonDetuneKnob[i]->hide();
-		unisonMorphKnob[i]->hide();
-		unisonModifyKnob[i]->hide();
-		detuneKnob[i]->hide();
-		phaseKnob[i]->hide();
-		phaseRandKnob[i]->hide();
-		volKnob[i]->hide();
-		enabledToggle[i]->hide();
-		mutedToggle[i]->hide();
-		modifyModeBox[i]->hide();
-		panKnob[i]->hide();
-		if( castModel<Microwave>()->mainNum.value() - 1 == i )
-		{
-			morphKnob[i]->show();
-			rangeKnob[i]->show();
-			sampLenKnob[i]->show();
-			morphMaxKnob[i]->show();
-			modifyKnob[i]->show();
-			unisonVoicesKnob[i]->show();
-			unisonDetuneKnob[i]->show();
-			unisonMorphKnob[i]->show();
-			unisonModifyKnob[i]->show();
-			detuneKnob[i]->show();
-			phaseKnob[i]->show();
-			phaseRandKnob[i]->show();
-			volKnob[i]->show();
-			enabledToggle[i]->show();
-			mutedToggle[i]->show();
-			modifyModeBox[i]->show();
-			panKnob[i]->show();
-		}
-	}
+	Microwave * b = castModel<Microwave>();
+
+	int mainNumValue = b->mainNum.value() - 1;
+
+	morphKnob->setModel( b->morph[mainNumValue] );
+	rangeKnob->setModel( b->range[mainNumValue] );
+	sampLenKnob->setModel( b->sampLen[mainNumValue] );
+	modifyKnob->setModel( b->modify[mainNumValue] );
+	morphMaxKnob->setModel( b->morphMax[mainNumValue] );
+	unisonVoicesKnob->setModel( b->unisonVoices[mainNumValue] );
+	unisonDetuneKnob->setModel( b->unisonDetune[mainNumValue] );
+	unisonMorphKnob->setModel( b->unisonMorph[mainNumValue] );
+	unisonModifyKnob->setModel( b->unisonModify[mainNumValue] );
+	detuneKnob->setModel( b->detune[mainNumValue] );
+	modifyModeBox-> setModel( b-> modifyMode[mainNumValue] );
+	phaseKnob->setModel( b->phase[mainNumValue] );
+	phaseRandKnob->setModel( b->phaseRand[mainNumValue] );
+	volKnob->setModel( b->vol[mainNumValue] );
+	enabledToggle->setModel( b->enabled[mainNumValue] );
+	mutedToggle->setModel( b->muted[mainNumValue] );
+	panKnob->setModel( b->pan[mainNumValue] );
 }
 
 
@@ -2299,37 +2201,20 @@ void MicrowaveView::subNumChanged()
 	{
 		b->graph.setSampleAt( i, b->subs[(b->subNum.value()-1)*2048+i] );
 	}
-	for( int i = 0; i < 64; ++i )
-	{
-		if( i != b->subNum.value()-1 )
-		{
-			subEnabledToggle[i]->hide();
-			subVolKnob[i]->hide();
-			subPhaseKnob[i]->hide();
-			subPhaseRandKnob[i]->hide();
-			subDetuneKnob[i]->hide();
-			subMutedToggle[i]->hide();
-			subKeytrackToggle[i]->hide();
-			subSampLenKnob[i]->hide();
-			subNoiseToggle[i]->hide();
-			subPanningKnob[i]->hide();
-			subTempoKnob[i]->hide();
-		}
-		else
-		{
-			subEnabledToggle[i]->show();
-			subVolKnob[i]->show();
-			subPhaseKnob[i]->show();
-			subPhaseRandKnob[i]->show();
-			subDetuneKnob[i]->show();
-			subMutedToggle[i]->show();
-			subKeytrackToggle[i]->show();
-			subSampLenKnob[i]->show();
-			subNoiseToggle[i]->show();
-			subPanningKnob[i]->show();
-			subTempoKnob[i]->show();
-		}
-	}
+
+	int subNumValue = b->subNum.value() - 1;
+
+	subVolKnob->setModel( b->subVol[subNumValue] );
+	subEnabledToggle->setModel( b->subEnabled[subNumValue] );
+	subPhaseKnob->setModel( b->subPhase[subNumValue] );
+	subPhaseRandKnob->setModel( b->subPhaseRand[subNumValue] );
+	subDetuneKnob->setModel( b->subDetune[subNumValue] );
+	subMutedToggle->setModel( b->subMuted[subNumValue] );
+	subKeytrackToggle->setModel( b->subKeytrack[subNumValue] );
+	subSampLenKnob->setModel( b->subSampLen[subNumValue] );
+	subNoiseToggle->setModel( b->subNoise[subNumValue] );
+	subPanningKnob->setModel( b->subPanning[subNumValue] );
+	subTempoKnob->setModel( b->subTempo[subNumValue] );
 }
 
 
@@ -2342,41 +2227,22 @@ void MicrowaveView::sampNumChanged()
 	{
 		b->graph.setSampleAt( i, b->sampGraphs[(b->sampNum.value()-1)*128+i] );
 	}
-	for( int i = 0; i < 8; ++i )
-	{
-		if( i != b->sampNum.value()-1 )
-		{
-			sampleEnabledToggle[i]->hide();
-			sampleGraphEnabledToggle[i]->hide();
-			sampleMutedToggle[i]->hide();
-			sampleKeytrackingToggle[i]->hide();
-			sampleLoopToggle[i]->hide();
 
-			sampleVolumeKnob[i]->hide();
-			samplePanningKnob[i]->hide();
-			sampleDetuneKnob[i]->hide();
-			samplePhaseKnob[i]->hide();
-			samplePhaseRandKnob[i]->hide();
-			sampleStartKnob[i]->hide();
-			sampleEndKnob[i]->hide();
-		}
-		else
-		{
-			sampleEnabledToggle[i]->show();
-			sampleGraphEnabledToggle[i]->show();
-			sampleMutedToggle[i]->show();
-			sampleKeytrackingToggle[i]->show();
-			sampleLoopToggle[i]->show();
+	int sampNumValue = b->sampNum.value() - 1;
 
-			sampleVolumeKnob[i]->show();
-			samplePanningKnob[i]->show();
-			sampleDetuneKnob[i]->show();
-			samplePhaseKnob[i]->show();
-			samplePhaseRandKnob[i]->show();
-			sampleStartKnob[i]->show();
-			sampleEndKnob[i]->show();
-		}
-	}
+	sampleEnabledToggle->setModel( b->sampleEnabled[sampNumValue] );
+	sampleGraphEnabledToggle->setModel( b->sampleGraphEnabled[sampNumValue] );
+	sampleMutedToggle->setModel( b->sampleMuted[sampNumValue] );
+	sampleKeytrackingToggle->setModel( b->sampleKeytracking[sampNumValue] );
+	sampleLoopToggle->setModel( b->sampleLoop[sampNumValue] );
+
+	sampleVolumeKnob->setModel( b->sampleVolume[sampNumValue] );
+	samplePanningKnob->setModel( b->samplePanning[sampNumValue] );
+	sampleDetuneKnob->setModel( b->sampleDetune[sampNumValue] );
+	samplePhaseKnob->setModel( b->samplePhase[sampNumValue] );
+	samplePhaseRandKnob->setModel( b->samplePhaseRand[sampNumValue] );
+	sampleStartKnob->setModel( b->sampleStart[sampNumValue] );
+	sampleEndKnob->setModel( b->sampleEnd[sampNumValue] );
 }
 
 
@@ -2385,80 +2251,86 @@ void MicrowaveView::modOutSecChanged( int i )
 {
 	Microwave * b = castModel<Microwave>();
 
-	switch( b->modOutSec[i]->value() )
+	int modScrollVal = ( matrixScrollBar->value() ) / 100.f * 115.f;
+	int matrixDivide = modScrollVal / 460 * 4;
+
+	if( i-matrixDivide < 8 && i-matrixDivide >= 0 )
 	{
-		case 0:// None
+		switch( b->modOutSec[i]->value() )
 		{
-			modOutSigBox[i]->hide();
-			modOutSecNumBox[i]->hide();
-			break;
-		}
-		case 1:// Main OSC
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->show();
-			b->modOutSig[i]->clear();
-			mainoscsignalsmodel( b->modOutSig[i] )
-			b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
-			break;
-		}
-		case 2:// Sub OSC
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->show();
-			b->modOutSig[i]->clear();
-			subsignalsmodel( b->modOutSig[i] )
-			b->modOutSecNum[i]->setRange( 1.f, 64.f, 1.f );
-			break;
-		}
-		case 3:// Sample OSC
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->show();
-			b->modOutSig[i]->clear();
-			samplesignalsmodel( b->modOutSig[i] )
-			b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
-			break;
-		}
-		case 4:// Matrix Parameters
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->show();
-			b->modOutSig[i]->clear();
-			matrixsignalsmodel( b->modOutSig[i] )
-			b->modOutSecNum[i]->setRange( 1.f, 64.f, 1.f );
-			break;
-		}
-		case 5:// Filter Input
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->hide();
-			b->modOutSig[i]->clear();
-			mod8model( b->modOutSig[i] )
-			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
-			break;
-		}
-		case 6:// Filter Parameters
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->hide();
-			b->modOutSig[i]->clear();
-			filtersignalsmodel( b->modOutSig[i] )
-			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
-			break;
-		}
-		case 7:// Macro
-		{
-			modOutSigBox[i]->show();
-			modOutSecNumBox[i]->hide();
-			b->modOutSig[i]->clear();
-			mod8model( b->modOutSig[i] )
-			//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
-			break;
-		}
-		default:
-		{
-			break;
+			case 0:// None
+			{
+				modOutSigBox[i-matrixDivide]->hide();
+				modOutSecNumBox[i-matrixDivide]->hide();
+				break;
+			}
+			case 1:// Main OSC
+			{
+				modOutSigBox[i-matrixDivide]->show();
+				modOutSecNumBox[i-matrixDivide]->show();
+				b->modOutSig[i]->clear();
+				mainoscsignalsmodel( b->modOutSig[i] )
+				b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+				break;
+			}
+			case 2:// Sub OSC
+			{
+				modOutSigBox[i-matrixDivide]->show();
+				modOutSecNumBox[i-matrixDivide]->show();
+				b->modOutSig[i]->clear();
+				subsignalsmodel( b->modOutSig[i] )
+				b->modOutSecNum[i]->setRange( 1.f, 64.f, 1.f );
+				break;
+			}
+			case 3:// Sample OSC
+			{
+				modOutSigBox[i-matrixDivide]->show();
+				modOutSecNumBox[i-matrixDivide]->show();
+				b->modOutSig[i]->clear();
+				samplesignalsmodel( b->modOutSig[i] )
+				b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+				break;
+			}
+			case 4:// Matrix Parameters
+			{
+				modOutSigBox[i-matrixDivide]->show();
+				modOutSecNumBox[i-matrixDivide]->show();
+				b->modOutSig[i]->clear();
+				matrixsignalsmodel( b->modOutSig[i] )
+				b->modOutSecNum[i]->setRange( 1.f, 64.f, 1.f );
+				break;
+			}
+			case 5:// Filter Input
+			{
+				modOutSigBox[i-matrixDivide]->show();
+				modOutSecNumBox[i-matrixDivide]->hide();
+				b->modOutSig[i]->clear();
+				mod8model( b->modOutSig[i] )
+				//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+				break;
+			}
+			case 6:// Filter Parameters
+			{
+				modOutSigBox[i-matrixDivide]->show();
+				modOutSecNumBox[i-matrixDivide]->hide();
+				b->modOutSig[i]->clear();
+				filtersignalsmodel( b->modOutSig[i] )
+				//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+				break;
+			}
+			case 7:// Macro
+			{
+				modOutSigBox[i-matrixDivide]->show();
+				modOutSecNumBox[i-matrixDivide]->hide();
+				b->modOutSig[i]->clear();
+				mod8model( b->modOutSig[i] )
+				//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
+				break;
+			}
+			default:
+			{
+				break;
+			}
 		}
 	}
 }
@@ -2469,42 +2341,47 @@ void MicrowaveView::modInChanged( int i )
 {
 	Microwave * b = castModel<Microwave>();
 
-	switch( b->modIn[i]->value() )
+	int modScrollVal = ( matrixScrollBar->value() ) / 100.f * 115.f;
+	int matrixDivide = modScrollVal / 460 * 4;
+
+	if( i-matrixDivide < 8 && i-matrixDivide >= 0 )
 	{
-		case 0:
+		switch( b->modIn[i]->value() )
 		{
-			modInNumBox[i]->hide();
-			modInOtherNumBox[i]->hide();
-			break;
-		}
-		case 1:// Main OSC
-		{
-			modInNumBox[i]->show();
-			modInOtherNumBox[i]->hide();
-			b->modInNum[i]->setRange( 1, 8, 1 );
-			break;
-		}
-		case 2:// Sub OSC
-		{
-			modInNumBox[i]->show();
-			modInOtherNumBox[i]->hide();
-			b->modInNum[i]->setRange( 1, 64, 1 );
-			break;
-		}
-		case 3:// Filter
-		{
-			modInNumBox[i]->show();
-			modInOtherNumBox[i]->hide();
-			b->modInNum[i]->setRange( 1, 8, 1 );
-			//b->modInOtherNum[i]->setRange( 1, 8, 1 );
-			break;
-		}
-		case 4:// Sample OSC
-		{
-			modInNumBox[i]->show();
-			modInOtherNumBox[i]->hide();
-			b->modInNum[i]->setRange( 1, 8, 1 );
-			break;
+			case 0:
+			{
+				modInNumBox[i-matrixDivide]->hide();
+				modInOtherNumBox[i-matrixDivide]->hide();
+				break;
+			}
+			case 1:// Main OSC
+			{
+				modInNumBox[i-matrixDivide]->show();
+				modInOtherNumBox[i-matrixDivide]->hide();
+				b->modInNum[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 2:// Sub OSC
+			{
+				modInNumBox[i-matrixDivide]->show();
+				modInOtherNumBox[i-matrixDivide]->hide();
+				b->modInNum[i]->setRange( 1, 64, 1 );
+				break;
+			}
+			case 3:// Filter
+			{
+				modInNumBox[i-matrixDivide]->show();
+				modInOtherNumBox[i-matrixDivide]->hide();
+				b->modInNum[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 4:// Sample OSC
+			{
+				modInNumBox[i-matrixDivide]->show();
+				modInOtherNumBox[i-matrixDivide]->hide();
+				b->modInNum[i]->setRange( 1, 8, 1 );
+				break;
+			}
 		}
 	}
 }
@@ -3989,19 +3866,25 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 			if( filtKeytracking[l] )
 			{
 				temp1 = round( sample_rate / detuneWithCents( nph->frequency(), filtDetune[l] ) );
-				filtDelayBuf[l][0].resize( temp1 );
-				filtDelayBuf[l][1].resize( temp1 );
 			}
 			else
 			{
 				temp1 = round( sample_rate / detuneWithCents( 440.f, filtDetune[l] ) );
+			}
+			if( filtDelayBuf[l][0].size() != temp1 )
+			{
 				filtDelayBuf[l][0].resize( temp1 );
 				filtDelayBuf[l][1].resize( temp1 );
 			}
 
-			temp1 = filtDelayBuf[l][0].size() - 1;
-			filtInputs[l][0] += filtDelayBuf[l][0].at( temp1 );
-			filtInputs[l][1] += filtDelayBuf[l][1].at( temp1 );
+			++filtFeedbackLoc[l];
+			if( filtFeedbackLoc[l] > filtDelayBuf[l][0].size() - 1 )
+			{
+				filtFeedbackLoc[l] = 0;
+			}
+
+			filtInputs[l][0] += filtDelayBuf[l][0].at( filtFeedbackLoc[l] );
+			filtInputs[l][1] += filtDelayBuf[l][1].at( filtFeedbackLoc[l] );
 
 			cutoff = filtCutoff[l];
 			mode = filtType[l];
@@ -4235,8 +4118,8 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 			}
 
 			temp1 = filtFeedback[l] * 0.01f;
-			filtDelayBuf[l][0].insert( filtDelayBuf[l][0].begin(), filtOutputs[l][0] * temp1 );
-			filtDelayBuf[l][1].insert( filtDelayBuf[l][1].begin(), filtOutputs[l][1] * temp1 );
+			filtDelayBuf[l][0][filtFeedbackLoc[l]] = filtOutputs[l][0] * temp1;
+			filtDelayBuf[l][1][filtFeedbackLoc[l]] = filtOutputs[l][1] * temp1;
 
 			filtInputs[l][0] = 0;
 			filtInputs[l][1] = 0;
@@ -4942,7 +4825,7 @@ QString MicrowaveManualView::s_manualText=
 "<br>"
 "If you zoom in all the way on a sound or waveform, you'll see these little \"audio pixels\".  These are called \"samples\", not to be confused with the common term \"sound sample\" which refers to any stored piece of audio.  These \"audio pixels\" can easily be seen when using LMMS's BitInvader.<br>"
 "<br>"
-"A \"wavetable synthesizer\" is a synthesizer that stores its waveforms as a list of samples.  This means synthesizers like BitInvader and WatSyn are technically wavetable synthesizers.  But, the term \"wavetable synthesizer\" more commonly (but not more or less correctly) refers to a synthesizer that stores multiple waveforms, plays one waveform and repeats it, and allows the user to move a knob to change which waveform is being played.  Synthesizers of this nature, even the basic ones, are unimaginably powerful.  Microwave is one of them.<br>"
+"A \"wavetable synthesizer\" is a synthesizer that stores its waveforms as a list of samples.  This means synthesizers like BitInvader and WatSyn are technically wavetable synthesizers.  But, the term \"wavetable synthesizer\" more commonly (but not more or less correctly) refers to a synthesizer that stores multiple waveforms, plays one waveform and repeats it, and allows the user to move a knob to change which waveform is being played.  Synthesizers of this nature, even the basic ones, are unimaginably powerful.  Microwave is one of them, but in no way is it simple.<br>"
 "<br>"
 "Microwave's wavetables have 256 waveforms, at 2048 samples each.  The Morph (MPH) knob chooses which of the 256 waveforms in the wavetable to play.  It is important to note that Microwave does not have any wavetable loaded by default, so no sound will be heard currently.  Load a sound file as a wavetable now (click the folder button at the bottom).  If you play a note while moving the Morph knob, you'll notice the waveform that is playing morphing to create new timbres.<br>"
 "<br>"

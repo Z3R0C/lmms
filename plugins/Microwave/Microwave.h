@@ -69,14 +69,25 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Sine" ), make_unique<PluginPixmapLoader>( "sin" ) );\
 		name ->addItem( tr( "Atan" ), make_unique<PluginPixmapLoader>( "tri" ) );
 
+#define modinmodel( name )\
+		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
+		name ->addItem( tr( "Main OSC" ), make_unique<PluginPixmapLoader>( "sqr" ) );\
+		name ->addItem( tr( "Sub OSC" ), make_unique<PluginPixmapLoader>( "sin" ) );\
+		name ->addItem( tr( "Sample OSC" ), make_unique<PluginPixmapLoader>( "noise" ) );\
+		name ->addItem( tr( "Filter Output" ), make_unique<PluginPixmapLoader>( "moog" ) );\
+		name ->addItem( tr( "Velocity" ), make_unique<PluginPixmapLoader>( "saw" ) );\
+		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
+		name ->addItem( tr( "Humanizer" ), make_unique<PluginPixmapLoader>( "sinabs" ) );\
+		name ->addItem( tr( "Macro" ), make_unique<PluginPixmapLoader>( "letter_m" ) );
+
 #define modsectionsmodel( name )\
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
-		name ->addItem( tr( "Main OSC" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Sub OSC" ), make_unique<PluginPixmapLoader>( "sqr" ) );\
+		name ->addItem( tr( "Main OSC" ), make_unique<PluginPixmapLoader>( "sqr" ) );\
+		name ->addItem( tr( "Sub OSC" ), make_unique<PluginPixmapLoader>( "sin" ) );\
 		name ->addItem( tr( "Sample OSC" ), make_unique<PluginPixmapLoader>( "noise" ) );\
 		name ->addItem( tr( "Matrix" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
 		name ->addItem( tr( "Filter Input" ), make_unique<PluginPixmapLoader>( "moog" ) );\
-		name ->addItem( tr( "Filter Parameters" ), make_unique<PluginPixmapLoader>( "saw" ) );\
+		name ->addItem( tr( "Filter Parameters" ), make_unique<PluginPixmapLoader>( "letter_f" ) );\
 		name ->addItem( tr( "Macro" ), make_unique<PluginPixmapLoader>( "letter_m" ) );
 
 #define mainoscsignalsmodel( name )\
@@ -86,8 +97,8 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Modify" ), make_unique<PluginPixmapLoader>( "moog" ) );\
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Phase" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
-		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
+		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );\
+		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "letter_p" ) );\
 		name ->addItem( tr( "Unison Number" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
 		name ->addItem( tr( "Unison Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Unison Morph" ), make_unique<PluginPixmapLoader>( "tri" ) );\
@@ -97,14 +108,14 @@ class Microwave : public Instrument
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Phase" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "ramp" ) );
+		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );
 
 #define samplesignalsmodel( name )\
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Phase" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
-		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
+		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );\
+		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "letter_p" ) );\
 		name ->addItem( tr( "Length" ), make_unique<PluginPixmapLoader>( "sin" ) );
 
 #define matrixsignalsmodel( name )\
@@ -128,17 +139,6 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Saturation" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
 		name ->addItem( tr( "Feedback" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "ramp" ) );
-
-#define modinmodel( name )\
-		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
-		name ->addItem( tr( "Main OSC" ), make_unique<PluginPixmapLoader>( "sqr" ) );\
-		name ->addItem( tr( "Sub OSC" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Sample OSC" ), make_unique<PluginPixmapLoader>( "noise" ) );\
-		name ->addItem( tr( "Filter Output" ), make_unique<PluginPixmapLoader>( "moog" ) );\
-		name ->addItem( tr( "Velocity" ), make_unique<PluginPixmapLoader>( "saw" ) );\
-		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
-		name ->addItem( tr( "Humanizer" ), make_unique<PluginPixmapLoader>( "sinabs" ) );\
-		name ->addItem( tr( "Macro" ), make_unique<PluginPixmapLoader>( "letter_m" ) );
 
 #define mod8model( name )\
 		name ->addItem( tr( "1" ), make_unique<PluginPixmapLoader>( "number_1" ) );\
@@ -192,10 +192,7 @@ class Microwave : public Instrument
 		name.addItem( tr( "Load wavetable file" ) );\
 		name.addItem( tr( "Autocorrelation method" ) );
 /*		name.addItem( tr( "Choose waveform length" ) );\
-		name.addItem( tr( "Similarity Test Method" ) );\
-		name.addItem( tr( "6x" ) );\
-		name.addItem( tr( "7x" ) );\
-		name.addItem( tr( "8x" ) );*/
+		name.addItem( tr( "Similarity Test Method" ) );\*/
 
 public:
 	Microwave(InstrumentTrack * _instrument_track );
@@ -526,25 +523,27 @@ private:
 
 	PixmapButton * manualBtn;
 
-	Knob * morphKnob[8];
-	Knob * rangeKnob[8];
+	Knob * morphKnob;
+	Knob * rangeKnob;
 	Knob * visvolKnob;
-	Knob * sampLenKnob[8];
-	Knob * morphMaxKnob[8];
-	Knob * unisonVoicesKnob[8];
-	Knob * unisonDetuneKnob[8];
-	Knob * unisonMorphKnob[8];
-	Knob * unisonModifyKnob[8];
-	Knob * detuneKnob[8];
+	Knob * sampLenKnob;
+	Knob * morphMaxKnob;
+	Knob * unisonVoicesKnob;
+	Knob * unisonDetuneKnob;
+	Knob * unisonMorphKnob;
+	Knob * unisonModifyKnob;
+	Knob * detuneKnob;
 	Knob * loadAlgKnob;
 	Knob * loadChnlKnob;
-	Knob * phaseKnob[8];
-	Knob * phaseRandKnob[8];
-	Knob * volKnob[8];
-	LedCheckBox * enabledToggle[8];
-	LedCheckBox * mutedToggle[8];
+	Knob * phaseKnob;
+	Knob * phaseRandKnob;
+	Knob * volKnob;
+	LedCheckBox * enabledToggle;
+	LedCheckBox * mutedToggle;
 	Knob * scrollKnob;
-	Knob * panKnob[8];
+	Knob * panKnob;
+	ComboBox * modifyModeBox;
+	Knob * modifyKnob;
 
 	Knob * filtInVolKnob[8];
 	ComboBox * filtTypeBox[8];
@@ -569,24 +568,22 @@ private:
 	ComboBox * oversampleBox;
 	ComboBox * loadModeBox;
 
-	ComboBox * modifyModeBox[8];
-	Knob * modifyKnob[8];
-	ComboBox * modOutSecBox[64];
-	ComboBox * modOutSigBox[64];
-	LcdSpinBox * modOutSecNumBox[64];
-	ComboBox * modInBox[64];
-	LcdSpinBox * modInNumBox[64];
-	LcdSpinBox * modInOtherNumBox[64];
-	Knob * modInAmntKnob[64];
-	Knob * modInCurveKnob[64];
-	ComboBox * modInBox2[64];
-	LcdSpinBox * modInNumBox2[64];
-	LcdSpinBox * modInOtherNumBox2[64];
-	Knob * modInAmntKnob2[64];
-	Knob * modInCurveKnob2[64];
-	LedCheckBox * modEnabledToggle[64];
-	ComboBox * modCombineTypeBox[64];
-	LedCheckBox * modTypeToggle[64];
+	ComboBox * modOutSecBox[8];
+	ComboBox * modOutSigBox[8];
+	LcdSpinBox * modOutSecNumBox[8];
+	ComboBox * modInBox[8];
+	LcdSpinBox * modInNumBox[8];
+	LcdSpinBox * modInOtherNumBox[8];
+	Knob * modInAmntKnob[8];
+	Knob * modInCurveKnob[8];
+	ComboBox * modInBox2[8];
+	LcdSpinBox * modInNumBox2[8];
+	LcdSpinBox * modInOtherNumBox2[8];
+	Knob * modInAmntKnob2[8];
+	Knob * modInCurveKnob2[8];
+	LedCheckBox * modEnabledToggle[8];
+	ComboBox * modCombineTypeBox[8];
+	LedCheckBox * modTypeToggle[8];
 
 	LcdSpinBox * modNumBox;
 	
@@ -594,31 +591,31 @@ private:
 
 	Graph * graph;
 	LedCheckBox * visualizeToggle;
-	LedCheckBox * subEnabledToggle[64];
-	Knob * subVolKnob[64];
-	Knob * subPhaseKnob[64];
-	Knob * subPhaseRandKnob[64];
-	Knob * subDetuneKnob[64];
-	LedCheckBox * subMutedToggle[64];
-	LedCheckBox * subKeytrackToggle[64];
-	Knob * subSampLenKnob[64];
-	LedCheckBox * subNoiseToggle[64];
-	Knob * subPanningKnob[64];
-	Knob * subTempoKnob[64];
+	LedCheckBox * subEnabledToggle;
+	Knob * subVolKnob;
+	Knob * subPhaseKnob;
+	Knob * subPhaseRandKnob;
+	Knob * subDetuneKnob;
+	LedCheckBox * subMutedToggle;
+	LedCheckBox * subKeytrackToggle;
+	Knob * subSampLenKnob;
+	LedCheckBox * subNoiseToggle;
+	Knob * subPanningKnob;
+	Knob * subTempoKnob;
 
-	LedCheckBox * sampleEnabledToggle[8];
-	LedCheckBox * sampleGraphEnabledToggle[8];
-	LedCheckBox * sampleMutedToggle[8];
-	LedCheckBox * sampleKeytrackingToggle[8];
-	LedCheckBox * sampleLoopToggle[8];
+	LedCheckBox * sampleEnabledToggle;
+	LedCheckBox * sampleGraphEnabledToggle;
+	LedCheckBox * sampleMutedToggle;
+	LedCheckBox * sampleKeytrackingToggle;
+	LedCheckBox * sampleLoopToggle;
 
-	Knob * sampleVolumeKnob[8];
-	Knob * samplePanningKnob[8];
-	Knob * sampleDetuneKnob[8];
-	Knob * samplePhaseKnob[8];
-	Knob * samplePhaseRandKnob[8];
-	Knob * sampleStartKnob[8];
-	Knob * sampleEndKnob[8];
+	Knob * sampleVolumeKnob;
+	Knob * samplePanningKnob;
+	Knob * sampleDetuneKnob;
+	Knob * samplePhaseKnob;
+	Knob * samplePhaseRandKnob;
+	Knob * sampleStartKnob;
+	Knob * sampleEndKnob;
 
 	Knob * wtLoad1Knob;
 	Knob * wtLoad2Knob;
@@ -845,6 +842,8 @@ private:
 	float unisonVoicesMinusOne = 0;
 
 	bool updateFrequency = 0;
+
+	int filtFeedbackLoc[8] = {0};
 
 	float macro[8];
 
