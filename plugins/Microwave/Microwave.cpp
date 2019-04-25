@@ -4270,7 +4270,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 			currentRangeValInvert = 1.f / rangeVal[i];// Prevents repetitive division in the loop below.
 			currentSampLen = sampLen[i];
 			currentIndex = sample_morerealindex[i][l];
-			if( modifyModeVal[i] != 15 && modifyModeVal[i] != 16 )// If NOT Squarify or Pulsify Modify Mode
+			if( modifyModeVal[i] != 11 && modifyModeVal[i] != 12 )// If NOT Squarify or Pulsify Modify Mode
 			{
 				// Only grab samples from the waveforms when they will be used, depending on the Range knob
 				for( int j = loopStart; j < loopEnd; ++j )
@@ -4279,7 +4279,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					sample[i][l] += waveforms[i][currentIndex + j * currentSampLen] * ( 1 - ( abs( morphVal[i] - j ) * currentRangeValInvert ));
 				}
 			}
-			else if( modifyModeVal[i] == 15 )// If Squarify Modify Mode
+			else if( modifyModeVal[i] == 11 )// If Squarify Modify Mode
 			{
 				// Self-made formula, may be buggy.  Crossfade one half of waveform with the inverse of the other.
 				// Some major CPU improvements can be made here.
@@ -4291,7 +4291,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					( ( modifyVal[i] / currentSampLen ) + 1 ); // Volume compensation
 				}
 			}
-			else if( modifyModeVal[i] == 16 )// Pulsify Mode
+			else if( modifyModeVal[i] == 12 )// Pulsify Mode
 			{
 				// Self-made formula, may be buggy.  Crossfade one side of waveform with the inverse of the other.
 				// Some major CPU improvements can be made here.
