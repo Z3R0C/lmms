@@ -40,6 +40,7 @@
 #include <QScrollBar>
 #include <QLabel>
 #include <QPlainTextEdit>
+#include <QLineEdit>
 
 
 class oscillator;
@@ -67,7 +68,8 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Clip" ), make_unique<PluginPixmapLoader>( "sqr" ) );\
 		name ->addItem( tr( "Inverse Clip" ), make_unique<PluginPixmapLoader>( "sqr" ) );\
 		name ->addItem( tr( "Sine" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Atan" ), make_unique<PluginPixmapLoader>( "tri" ) );
+		name ->addItem( tr( "Atan" ), make_unique<PluginPixmapLoader>( "tri" ) );\
+		name ->addItem( tr( "Sin(x)/x (Warning: this adds DC Offset)" ), make_unique<PluginPixmapLoader>( "sin" ) );
 
 #define modinmodel( name )\
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
@@ -108,7 +110,8 @@ class Microwave : public Instrument
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Phase" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );
+		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );\
+		name ->addItem( tr( "Rate Limit" ), make_unique<PluginPixmapLoader>( "letter_r" ) );
 
 #define samplesignalsmodel( name )\
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
@@ -236,18 +239,16 @@ private:
 	IntModel * modOutSecNum[64];
 	ComboBoxModel * modIn[64];
 	IntModel * modInNum[64];
-	IntModel * modInOtherNum[64];
 	FloatModel * modInAmnt[64];
 	FloatModel * modInCurve[64];
 	ComboBoxModel * modIn2[64];
 	IntModel * modInNum2[64];
-	IntModel * modInOtherNum2[64];
 	FloatModel * modInAmnt2[64];
 	FloatModel * modInCurve2[64];
 	BoolModel * modEnabled[64];
 	ComboBoxModel * modCombineType[64];
 	BoolModel * modType[64];
-	IntModel  modNum;
+	BoolModel * modType2[64];
 	FloatModel  * unisonVoices[8];
 	FloatModel  * unisonDetune[8];
 	FloatModel  * unisonMorph[8];
@@ -300,6 +301,7 @@ private:
 	BoolModel * subNoise[64];
 	FloatModel * subPanning[64];
 	FloatModel * subTempo[64];
+	FloatModel * subRateLimit[64];
 
 	
 	float sample_realindex[8][32] = {{0}};
@@ -350,12 +352,10 @@ private:
 	int sampLenArr[8] = {0};
 	int modInArr[64] = {0};
 	int modInNumArr[64] = {0};
-	int modInOtherNumArr[64] = {0};
 	float modInAmntArr[64] = {0};
 	float modInCurveArr[64] = {0};
 	int modIn2Arr[64] = {0};
 	int modInNum2Arr[64] = {0};
-	int modInOtherNum2Arr[64] = {0};
 	float modInAmnt2Arr[64] = {0};
 	float modInCurve2Arr[64] = {0};
 	int modOutSecArr[64] = {0};
@@ -364,6 +364,7 @@ private:
 	bool modEnabledArr[64] = {false};
 	int modCombineTypeArr[64] = {0};
 	bool modTypeArr[64] = {0};
+	bool modType2Arr[64] = {0};
 	float phaseArr[8] = {0};
 	float phaseRandArr[8] = {0};
 	float volArr[8] = {0};
@@ -383,6 +384,7 @@ private:
 	bool subNoiseArr[64] = {false};
 	float subPanningArr[64] = {0};
 	float subTempoArr[64] = {0};
+	float subRateLimitArr[64] = {0};
 	
 	float filtInVolArr[8] = {0};
 	int filtTypeArr[8] = {0};
@@ -424,6 +426,8 @@ private:
 	int maxFiltEnabled = 0;// The highest number of filter sections that must be looped through
 
 	InstrumentTrack * microwaveTrack = this->instrumentTrack();
+
+	Microwave * mwc;
 	
 	friend class MicrowaveView;
 	friend class mSynth;
@@ -478,10 +482,14 @@ protected slots:
 
 	void XBtnClicked();
 
+	void normalizeClicked();
+	void desawClicked();
+
+	void modEnabledChanged();
+
 private:
 	virtual void modelChanged();
 
-	void mouseMoveEvent( QMouseEvent * _me );
 	void wheelEvent( QWheelEvent * _me );
 	virtual void dropEvent( QDropEvent * _de );
 	virtual void dragEnterEvent( QDragEnterEvent * _dee );
@@ -503,6 +511,9 @@ private:
 	PixmapButton * usrWave2Btn;
 
 	PixmapButton * XBtn;// For leaving wavetable loading section
+
+	PixmapButton * normalizeBtn;
+	PixmapButton * desawBtn;
 
 	PixmapButton * openWavetableButton;
 	PixmapButton * confirmLoadButton;
@@ -573,19 +584,17 @@ private:
 	LcdSpinBox * modOutSecNumBox[8];
 	ComboBox * modInBox[8];
 	LcdSpinBox * modInNumBox[8];
-	LcdSpinBox * modInOtherNumBox[8];
 	Knob * modInAmntKnob[8];
 	Knob * modInCurveKnob[8];
 	ComboBox * modInBox2[8];
 	LcdSpinBox * modInNumBox2[8];
-	LcdSpinBox * modInOtherNumBox2[8];
 	Knob * modInAmntKnob2[8];
 	Knob * modInCurveKnob2[8];
 	LedCheckBox * modEnabledToggle[8];
 	ComboBox * modCombineTypeBox[8];
 	LedCheckBox * modTypeToggle[8];
-
-	LcdSpinBox * modNumBox;
+	LedCheckBox * modType2Toggle[8];
+	QLineEdit * modNumText[8];
 	
 	static QPixmap * s_artwork;
 
@@ -602,6 +611,7 @@ private:
 	LedCheckBox * subNoiseToggle;
 	Knob * subPanningKnob;
 	Knob * subTempoKnob;
+	Knob * subRateLimitKnob;
 
 	LedCheckBox * sampleEnabledToggle;
 	LedCheckBox * sampleGraphEnabledToggle;
@@ -661,14 +671,14 @@ public:
 	mSynth( NotePlayHandle * _nph,
 			const sample_rate_t _sample_rate,
 			float * phaseRand,
-			int * modifyModeVal, float * modifyVal, float * morphVal, float * rangeVal, float * unisonVoices, float * unisonDetune, float * unisonMorph, float * unisonModify, float * morphMaxVal, float * detuneVal, float waveforms[8][524288], float * subs, bool * subEnabled, float * subVol, float * subPhase, float * subPhaseRand, float * subDetune, bool * subMuted, bool * subKeytrack, float * subSampLen, bool * subNoise, int * sampLen, int * modIn, int * modInNum, int * modInOtherNum, float * modInAmnt, float * modInCurve, int * modIn2, int * modInNum2, int * modInOtherNum2, float * modInAmnt2, float * modInCurve2, int * modOutSec, int * modOutSig, int * modOutSecNum, int * modCombineType, bool * modType, float * phase, float * vol, float * filtInVol, int * filtType, int * filtSlope, float * filtCutoff, float * filtReso, float * filtGain, float * filtSatu, float * filtWetDry, float * filtBal, float * filtOutVol, bool * filtEnabled, bool * enabled, bool * modEnabled, float * sampGraphs, bool * muted, bool * sampleEnabled, bool * sampleGraphEnabled, bool * sampleMuted, bool * sampleKeytracking, bool * sampleLoop, float * sampleVolume, float * samplePanning, float * sampleDetune, float * samplePhase, float * samplePhaseRand, std::vector<float> (&samples)[8][2], float * filtFeedback, float * filtDetune, bool * filtKeytracking, float * subPanning, float * sampleStart, float * sampleEnd, float * pan, float * subTempo, float * macro, bool * filtMuted );
+			int * modifyModeVal, float * modifyVal, float * morphVal, float * rangeVal, float * unisonVoices, float * unisonDetune, float * unisonMorph, float * unisonModify, float * morphMaxVal, float * detuneVal, float waveforms[8][524288], float * subs, bool * subEnabled, float * subVol, float * subRateLimit, float * subPhase, float * subPhaseRand, float * subDetune, bool * subMuted, bool * subKeytrack, float * subSampLen, bool * subNoise, int * sampLen, int * modIn, int * modInNum, float * modInAmnt, float * modInCurve, int * modIn2, int * modInNum2, float * modInAmnt2, float * modInCurve2, int * modOutSec, int * modOutSig, int * modOutSecNum, int * modCombineType, bool * modType, bool * modType2, float * phase, float * vol, float * filtInVol, int * filtType, int * filtSlope, float * filtCutoff, float * filtReso, float * filtGain, float * filtSatu, float * filtWetDry, float * filtBal, float * filtOutVol, bool * filtEnabled, bool * enabled, bool * modEnabled, float * sampGraphs, bool * muted, bool * sampleEnabled, bool * sampleGraphEnabled, bool * sampleMuted, bool * sampleKeytracking, bool * sampleLoop, float * sampleVolume, float * samplePanning, float * sampleDetune, float * samplePhase, float * samplePhaseRand, std::vector<float> (&samples)[8][2], float * filtFeedback, float * filtDetune, bool * filtKeytracking, float * subPanning, float * sampleStart, float * sampleEnd, float * pan, float * subTempo, float * macro, bool * filtMuted );
 	virtual ~mSynth();
 	
-	std::vector<float> nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate );
+	std::vector<float> nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate, Microwave * mwc );
 
 	inline float detuneWithCents( float pitchValue, float detuneValue );
 
-	void refreshValue( int which, int num );
+	void refreshValue( int which, int num, Microwave * mwc );
 
 private:
 	float sample_realindex[8][32] = {{0}};
@@ -694,6 +704,8 @@ private:
 	bool lastMainOscEnvDone[8] = {false};
 	bool lastSubEnvDone[64] = {false};
 	bool lastSampleEnvDone[8] = {false};
+
+	int subNoiseDirection[64] = {0};
 
 	int loopStart = 0;
 	int loopEnd = 0;
@@ -737,12 +749,10 @@ private:
 	int sampLen[8];
 	int modIn[64];
 	int modInNum[64];
-	int modInOtherNum[64];
 	float modInAmnt[64];
 	float modInCurve[64];
 	int modIn2[64];
 	int modInNum2[64];
-	int modInOtherNum2[64];
 	float modInAmnt2[64];
 	float modInCurve2[64];
 	int modOutSec[64];
@@ -751,6 +761,7 @@ private:
 	bool modEnabled[64];
 	int modCombineType[64];
 	bool modType[64];
+	bool modType2[64];
 	float phase[8];
 	float phaseRand[8];
 	float vol[8];
@@ -769,6 +780,7 @@ private:
 	bool subNoise[64];
 	float subPanning[64];
 	float subTempo[64];
+	float subRateLimit[64];
 	
 	float filtInVol[8];
 	int filtType[8];

@@ -1,5 +1,5 @@
 /*
- * Microwave.cpp - morbidly advanced and versatile wavetable synthesizer
+ * Microwave.cpp - morbidly advanced and versatile modular wavetable synthesizer
  *
  * Copyright (c) 2019 Robert Black AKA DouglasDGI AKA Lost Robot <r94231/at/gmail/dot/com>
  * 
@@ -159,7 +159,6 @@ Plugin::Descriptor PLUGIN_EXPORT microwave_plugin_descriptor =
 Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 	Instrument( _instrument_track, &microwave_plugin_descriptor ),
 	visvol( 100, 0, 1000, 0.01f, this, tr( "Visualizer Volume" ) ),
-	modNum(1, 1, 32, this, tr( "Modulation Page Number" ) ),
 	loadChnl( 0, 0, 1, 1, this, tr( "Wavetable Loading Channel" ) ),
 	scroll( 1, 1, 7, 0.0001f, this, tr( "Scroll" ) ),
 	subNum(1, 1, 64, this, tr( "Sub Oscillator Number" ) ),
@@ -188,7 +187,7 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		unisonDetune[i]->setScaleLogarithmic( true );
 		unisonMorph[i] = new FloatModel( 0, 0, 256, 0.0001f, this, tr( "Unison Morph" ) );
 		unisonModify[i] = new FloatModel( 0, 0, 2048, 0.0001f, this, tr( "Unison Modify" ) );
-		detune[i] = new FloatModel( 0, -9600, 9600, 1.f, this, tr( "Detune" ) );
+		detune[i] = new FloatModel( 0, -9600, 9600, 0.0001f, this, tr( "Detune" ) );
 		phase[i] = new FloatModel( 0, 0, 200, 0.0001f, this, tr( "Phase" ) );
 		phaseRand[i] = new FloatModel( 100, 0, 100, 0.0001f, this, tr( "Phase Randomness" ) );
 		vol[i] = new FloatModel( 100.f, 0, 200.f, 0.0001f, this, tr( "Volume" ) );
@@ -212,7 +211,7 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		filtOutVol[i] = new FloatModel( 100, 0, 200, 0.0001f, this, tr( "Output Volume" ) );
 		filtEnabled[i] = new BoolModel( false, this );
 		filtFeedback[i] = new FloatModel( 0, -100, 100, 0.0001f, this, tr( "Feedback" ) );
-		filtDetune[i] = new FloatModel( 0, -4800, 4800, 0.0001f, this, tr( "Detune" ) );
+		filtDetune[i] = new FloatModel( 0, -9600, 9600, 0.0001f, this, tr( "Detune" ) );
 		filtKeytracking[i] = new BoolModel( true, this );
 		filtMuted[i] = new BoolModel( false, this );
 		filtertypesmodel( filtType[i] )
@@ -241,13 +240,15 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		subVol[i] = new FloatModel( 100.f, 0.f, 200.f, 0.0001f, this, tr( "Volume" ) );
 		subPhase[i] = new FloatModel( 0.f, 0.f, 200.f, 0.0001f, this, tr( "Phase" ) );
 		subPhaseRand[i] = new FloatModel( 0.f, 0.f, 100.f, 0.0001f, this, tr( "Phase Randomness" ) );
-		subDetune[i] = new FloatModel( 0.f, -9600.f, 9600.f, 1.f, this, tr( "Detune" ) );
+		subDetune[i] = new FloatModel( 0.f, -9600.f, 9600.f, 0.0001f, this, tr( "Detune" ) );
 		subMuted[i] = new BoolModel( true, this );
 		subKeytrack[i] = new BoolModel( true, this );
 		subSampLen[i] = new FloatModel( 2048.f, 1.f, 2048.f, 1.f, this, tr( "Sample Length" ) );
 		subNoise[i] = new BoolModel( false, this );
 		subPanning[i] = new FloatModel( 0.f, -100.f, 100.f, 0.0001f, this, tr( "Panning" ) );
-		subTempo[i] = new FloatModel( 0.f, 0.f, 400.f, 1.f, this, tr( "Tempo" ) );
+		subTempo[i] = new FloatModel( 0.f, 0.f, 999.f, 1.f, this, tr( "Tempo" ) );
+		subRateLimit[i] = new FloatModel( 0.f, 0.f, 1.f, 0.000001f, this, tr( "Rate Limit" ) );
+		subRateLimit[i]->setScaleLogarithmic( true );
 
 		modEnabled[i] = new BoolModel( false, this );
 
@@ -256,10 +257,9 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		modOutSecNum[i] = new IntModel( 1, 1, 8, this, tr( "Modulation Section Number" ) );
 		modsectionsmodel( modOutSec[i] )
 		mainoscsignalsmodel( modOutSig[i] )
-		
+
 		modIn[i] = new ComboBoxModel( this, tr( "Modulator" ) );
 		modInNum[i] = new IntModel( 1, 1, 8, this, tr( "Modulator Number" ) );
-		modInOtherNum[i] = new IntModel( 1, 1, 8, this, tr( "Modulator Number" ) );
 		modinmodel( modIn[i] )
 
 		modInAmnt[i] = new FloatModel( 0, -200, 200, 0.0001f, this, tr( "Modulator Amount" ) );
@@ -268,7 +268,6 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 
 		modIn2[i] = new ComboBoxModel( this, tr( "Secondary Modulator" ) );
 		modInNum2[i] = new IntModel( 1, 1, 8, this, tr( "Secondary Modulator Number" ) );
-		modInOtherNum2[i] = new IntModel( 1, 1, 8, this, tr( "Secondary Modulator Number" ) );
 		modinmodel( modIn2[i] )
 
 		modInAmnt2[i] = new FloatModel( 0, -200, 200, 0.0001f, this, tr( "Secondary Modulator Amount" ) );
@@ -279,6 +278,7 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		modcombinetypemodel( modCombineType[i] )
 
 		modType[i] = new BoolModel( false, this );
+		modType2[i] = new BoolModel( false, this );
 	}
 
 	oversamplemodel( oversample )
@@ -364,29 +364,14 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		{
 			valueChanged(j, i);
 		}
+
 		valueChanged(48, i);
 
-		valueChanged(51, i);
-		valueChanged(52, i);
-		valueChanged(53, i);
-		valueChanged(54, i);
-		valueChanged(55, i);
-		valueChanged(56, i);
-		valueChanged(57, i);
-		valueChanged(58, i);
-		valueChanged(59, i);
-		valueChanged(60, i);
-		valueChanged(61, i);
-		valueChanged(62, i);
-		valueChanged(63, i);
-		valueChanged(64, i);
-		valueChanged(65, i);
-		valueChanged(66, i);
-		valueChanged(67, i);
-		valueChanged(68, i);
-		valueChanged(69, i);
-		valueChanged(70, i);
-		valueChanged(71, i);
+		for( int j = 51; j <= 71; ++j )
+		{
+			valueChanged(j, i);
+		}
+
 		valueChanged(78, i);
 		valueChanged(79, i);
 		valueChanged(80, i);
@@ -411,6 +396,7 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		connect( subNoise[i], &BoolModel::dataChanged, this, [this, i]() { valueChanged(34, i); }, Qt::DirectConnection );
 		connect( subPanning[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(72, i); }, Qt::DirectConnection );
 		connect( subTempo[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(76, i); }, Qt::DirectConnection );
+		connect( subRateLimit[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(82, i); }, Qt::DirectConnection );
 		for( int j = 26; j <= 35; ++j )
 		{
 			valueChanged(j, i);
@@ -421,12 +407,10 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 
 		connect( modIn[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(35, i); }, Qt::DirectConnection );
 		connect( modInNum[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(36, i); }, Qt::DirectConnection );
-		connect( modInOtherNum[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(37, i); }, Qt::DirectConnection );
 		connect( modInAmnt[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(38, i); }, Qt::DirectConnection );
 		connect( modInCurve[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(39, i); }, Qt::DirectConnection );
 		connect( modIn2[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(40, i); }, Qt::DirectConnection );
 		connect( modInNum2[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(41, i); }, Qt::DirectConnection );
-		connect( modInOtherNum2[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(42, i); }, Qt::DirectConnection );
 		connect( modInAmnt2[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(43, i); }, Qt::DirectConnection );
 		connect( modInCurve2[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(44, i); }, Qt::DirectConnection );
 		connect( modOutSec[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(45, i); }, Qt::DirectConnection );
@@ -435,6 +419,7 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		connect( modEnabled[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(49, i); }, Qt::DirectConnection );
 		connect( modCombineType[i], &ComboBoxModel::dataChanged, this, [this, i]() { valueChanged(50, i); }, Qt::DirectConnection );
 		connect( modType[i], &BoolModel::dataChanged, this, [this, i]() { valueChanged(77, i); }, Qt::DirectConnection );
+		connect( modType2[i], &BoolModel::dataChanged, this, [this, i]() { valueChanged(81, i); }, Qt::DirectConnection );
 		for( int j = 35; j <= 47; ++j )
 		{
 			valueChanged(j, i);
@@ -444,6 +429,8 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		valueChanged(72, i);
 		valueChanged(76, i);
 		valueChanged(77, i);
+		valueChanged(81, i);
+		valueChanged(82, i);
 
 		connect( modEnabled[i], &BoolModel::dataChanged, this, [this, i]() { modEnabledChanged(i); }, Qt::DirectConnection );
 	}
@@ -486,11 +473,22 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 {
 
 	// Save plugin version
-	_this.setAttribute( "version", "0.9" );
+	_this.setAttribute( "version", "Microwave Testing Release 4" );
+
+	/*
+
+	VERSION LIST:
+
+	- 0.9: Every version before Microwave Testing Release 4 was mistakenly listed as 0.9.
+	- Microwave Testing Release 4
+
+	*/
 
 	visvol.saveSettings( _doc, _this, "visualizervolume" );
 	loadMode.saveSettings( _doc, _this, "loadingalgorithm" );
 	loadChnl.saveSettings( _doc, _this, "loadingchannel" );
+
+	oversample.saveSettings( _doc, _this, "oversample" );
 
 	QString saveString;
 
@@ -612,6 +610,7 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 			subNoise[i]->saveSettings( _doc, _this, "subNoise_"+QString::number(i) );
 			subPanning[i]->saveSettings( _doc, _this, "subPanning_"+QString::number(i) );
 			subTempo[i]->saveSettings( _doc, _this, "subTempo_"+QString::number(i) );
+			subRateLimit[i]->saveSettings( _doc, _this, "subRateLimit_"+QString::number(i) );
 		}
 	}
 
@@ -621,12 +620,10 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 		{
 			modIn[i]->saveSettings( _doc, _this, "modIn_"+QString::number(i) );
 			modInNum[i]->saveSettings( _doc, _this, "modInNu"+QString::number(i) );
-			modInOtherNum[i]->saveSettings( _doc, _this, "modInOtherNu"+QString::number(i) );
 			modInAmnt[i]->saveSettings( _doc, _this, "modInAmnt_"+QString::number(i) );
 			modInCurve[i]->saveSettings( _doc, _this, "modInCurve_"+QString::number(i) );
 			modIn2[i]->saveSettings( _doc, _this, "modIn2_"+QString::number(i) );
 			modInNum2[i]->saveSettings( _doc, _this, "modInNum2_"+QString::number(i) );
-			modInOtherNum2[i]->saveSettings( _doc, _this, "modInOtherNum2_"+QString::number(i) );
 			modInAmnt2[i]->saveSettings( _doc, _this, "modAmnt2_"+QString::number(i) );
 			modInCurve2[i]->saveSettings( _doc, _this, "modCurve2_"+QString::number(i) );
 			modOutSec[i]->saveSettings( _doc, _this, "modOutSec_"+QString::number(i) );
@@ -635,6 +632,7 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 			modEnabled[i]->saveSettings( _doc, _this, "modEnabled_"+QString::number(i) );
 			modCombineType[i]->saveSettings( _doc, _this, "modCombineType_"+QString::number(i) );
 			modType[i]->saveSettings( _doc, _this, "modType_"+QString::number(i) );
+			modType2[i]->saveSettings( _doc, _this, "modType2_"+QString::number(i) );
 		}
 	}
 
@@ -650,6 +648,8 @@ void Microwave::loadSettings( const QDomElement & _this )
 	visvol.loadSettings( _this, "visualizervolume" );
 	loadMode.loadSettings( _this, "loadingalgorithm" );
 	loadChnl.loadSettings( _this, "loadingchannel" );
+
+	oversample.loadSettings( _this, "oversample" );
 
 	graph.setLength( 2048 );
 
@@ -729,6 +729,7 @@ void Microwave::loadSettings( const QDomElement & _this )
 			subNoise[i]->loadSettings( _this, "subNoise_"+QString::number(i) );
 			subPanning[i]->loadSettings( _this, "subPanning_"+QString::number(i) );
 			subTempo[i]->loadSettings( _this, "subTempo_"+QString::number(i) );
+			subRateLimit[i]->loadSettings( _this, "subRateLimit_"+QString::number(i) );
 		}
 
 		modEnabled[i]->loadSettings( _this, "modEnabled_"+QString::number(i) );
@@ -736,12 +737,10 @@ void Microwave::loadSettings( const QDomElement & _this )
 		{
 			modIn[i]->loadSettings( _this, "modIn_"+QString::number(i) );
 			modInNum[i]->loadSettings( _this, "modInNu"+QString::number(i) );
-			modInOtherNum[i]->loadSettings( _this, "modInOtherNu"+QString::number(i) );
 			modInAmnt[i]->loadSettings( _this, "modInAmnt_"+QString::number(i) );
 			modInCurve[i]->loadSettings( _this, "modInCurve_"+QString::number(i) );
 			modIn2[i]->loadSettings( _this, "modIn2_"+QString::number(i) );
 			modInNum2[i]->loadSettings( _this, "modInNum2_"+QString::number(i) );
-			modInOtherNum2[i]->loadSettings( _this, "modInOtherNum2_"+QString::number(i) );
 			modInAmnt2[i]->loadSettings( _this, "modAmnt2_"+QString::number(i) );
 			modInCurve2[i]->loadSettings( _this, "modCurve2_"+QString::number(i) );
 			modOutSec[i]->loadSettings( _this, "modOutSec_"+QString::number(i) );
@@ -749,10 +748,10 @@ void Microwave::loadSettings( const QDomElement & _this )
 			modOutSecNum[i]->loadSettings( _this, "modOutSecNu"+QString::number(i) );
 			modCombineType[i]->loadSettings( _this, "modCombineType_"+QString::number(i) );
 			modType[i]->loadSettings( _this, "modType_"+QString::number(i) );
+			modType2[i]->loadSettings( _this, "modType2_"+QString::number(i) );
 		}
 	}
 
-	// Load arrays
 	int size = 0;
 	char * dst = 0;
 	for( int j = 0; j < 8; ++j )
@@ -847,12 +846,10 @@ void Microwave::valueChanged( int which, int num )
 		case 34: subNoiseArr[num] = subNoise[num]->value(); break;
 		case 35: modInArr[num] = modIn[num]->value(); break;
 		case 36: modInNumArr[num] = modInNum[num]->value(); break;
-		case 37: modInOtherNumArr[num] = modInOtherNum[num]->value(); break;
 		case 38: modInAmntArr[num] = modInAmnt[num]->value(); break;
 		case 39: modInCurveArr[num] = modInCurve[num]->value(); break;
 		case 40: modIn2Arr[num] = modIn2[num]->value(); break;
 		case 41: modInNum2Arr[num] = modInNum2[num]->value(); break;
-		case 42: modInOtherNum2Arr[num] = modInOtherNum2[num]->value(); break;
 		case 43: modInAmnt2Arr[num] = modInAmnt2[num]->value(); break;
 		case 44: modInCurve2Arr[num] = modInCurve2[num]->value(); break;
 		case 45: modOutSecArr[num] = modOutSec[num]->value(); break;
@@ -884,6 +881,8 @@ void Microwave::valueChanged( int which, int num )
 		case 78: macroArr[num] = macro[num]->value(); break;
 		case 79: filtMutedArr[num] = filtMuted[num]->value(); break;
 		case 80: phaseRandArr[num] = phaseRand[num]->value(); break;
+		case 81: modType2Arr[num] = modType2[num]->value(); break;
+		case 82: subRateLimitArr[num] = subRateLimit[num]->value(); break;
 	}
 
 	ConstNotePlayHandleList nphList = NotePlayHandle::nphsOfInstrumentTrack( microwaveTrack, true );
@@ -932,12 +931,10 @@ void Microwave::valueChanged( int which, int num )
 				case 34: ps->subNoise[num] = subNoise[num]->value(); break;
 				case 35: ps->modIn[num] = modIn[num]->value(); break;
 				case 36: ps->modInNum[num] = modInNum[num]->value(); break;
-				case 37: ps->modInOtherNum[num] = modInOtherNum[num]->value(); break;
 				case 38: ps->modInAmnt[num] = modInAmnt[num]->value(); break;
 				case 39: ps->modInCurve[num] = modInCurve[num]->value(); break;
 				case 40: ps->modIn2[num] = modIn2[num]->value(); break;
 				case 41: ps->modInNum2[num] = modInNum2[num]->value(); break;
-				case 42: ps->modInOtherNum2[num] = modInOtherNum2[num]->value(); break;
 				case 43: ps->modInAmnt2[num] = modInAmnt2[num]->value(); break;
 				case 44: ps->modInCurve2[num] = modInCurve2[num]->value(); break;
 				case 45: ps->modOutSec[num] = modOutSec[num]->value(); break;
@@ -969,6 +966,8 @@ void Microwave::valueChanged( int which, int num )
 				case 78: ps->macro[num] = macro[num]->value(); break;
 				case 79: ps->filtMuted[num] = filtMuted[num]->value(); break;
 				case 80: ps->phaseRand[num] = phaseRand[num]->value(); break;
+				case 81: ps->modType2[num] = modType2[num]->value(); break;
+				case 82: ps->subRateLimit[num] = subRateLimit[num]->value(); break;
 			}
 		}
 	}
@@ -1042,8 +1041,14 @@ void Microwave::modEnabledChanged( int num )
 			maxModEnabled = i+1;
 		}
 	}
+}
 
-	//matrixScrollBar.setRange( 0, maxModEnabled * 100.f );
+//NOTE: Different from Microwave::modEnabledChanged.
+void MicrowaveView::modEnabledChanged()
+{
+	Microwave * b = castModel<Microwave>();
+
+	matrixScrollBar->setRange( 0, b->maxModEnabled * 100.f );
 }
 
 
@@ -1110,12 +1115,10 @@ void Microwave::switchMatrixSections( int source, int destination )
 {
 	int modInTemp = modInArr[destination];
 	int modInNumTemp = modInNumArr[destination];
-	float modInOtherNumTemp = modInOtherNumArr[destination];
 	float modInAmntTemp = modInAmntArr[destination];
 	float modInCurveTemp = modInCurveArr[destination];
 	int modIn2Temp = modIn2Arr[destination];
 	int modInNum2Temp = modInNum2Arr[destination];
-	int modInOtherNum2Temp = modInOtherNum2Arr[destination];
 	float modInAmnt2Temp = modInAmnt2Arr[destination];
 	float modInCurve2Temp = modInCurve2Arr[destination];
 	int modOutSecTemp = modOutSecArr[destination];
@@ -1124,15 +1127,14 @@ void Microwave::switchMatrixSections( int source, int destination )
 	bool modEnabledTemp = modEnabledArr[destination];
 	int modCombineTypeTemp = modCombineTypeArr[destination];
 	bool modTypeTemp = modTypeArr[destination];
+	bool modType2Temp = modType2Arr[destination];
 
 	modIn[destination]->setValue( modInArr[source] );
 	modInNum[destination]->setValue( modInNumArr[source] );
-	modInOtherNum[destination]->setValue( modInOtherNumArr[source] );
 	modInAmnt[destination]->setValue( modInAmntArr[source] );
 	modInCurve[destination]->setValue( modInCurveArr[source] );
 	modIn2[destination]->setValue( modIn2Arr[source] );
 	modInNum2[destination]->setValue( modInNum2Arr[source] );
-	modInOtherNum2[destination]->setValue( modInOtherNum2Arr[source] );
 	modInAmnt2[destination]->setValue( modInAmnt2Arr[source] );
 	modInCurve2[destination]->setValue( modInCurve2Arr[source] );
 	modOutSec[destination]->setValue( modOutSecArr[source] );
@@ -1141,15 +1143,14 @@ void Microwave::switchMatrixSections( int source, int destination )
 	modEnabled[destination]->setValue( modEnabledArr[source] );
 	modCombineType[destination]->setValue( modCombineTypeArr[source] );
 	modType[destination]->setValue( modTypeArr[source] );
+	modType2[destination]->setValue( modType2Arr[source] );
 
 	modIn[source]->setValue( modInTemp );
 	modInNum[source]->setValue( modInNumTemp );
-	modInOtherNum[source]->setValue( modInOtherNumTemp );
 	modInAmnt[source]->setValue( modInAmntTemp );
 	modInCurve[source]->setValue( modInCurveTemp );
 	modIn2[source]->setValue( modIn2Temp );
 	modInNum2[source]->setValue( modInNum2Temp );
-	modInOtherNum2[source]->setValue( modInOtherNum2Temp );
 	modInAmnt2[source]->setValue( modInAmnt2Temp );
 	modInCurve2[source]->setValue( modInCurve2Temp );
 	modOutSec[source]->setValue( modOutSecTemp );
@@ -1158,6 +1159,23 @@ void Microwave::switchMatrixSections( int source, int destination )
 	modEnabled[source]->setValue( modEnabledTemp );
 	modCombineType[source]->setValue( modCombineTypeTemp );
 	modType[source]->setValue( modTypeTemp );
+	modType2[source]->setValue( modType2Temp );
+
+	// If something is sent to a matrix box and the matrix box is moved, we want to make sure it's still attached to the same box after it is moved.
+	for( int i = 0; i < 64; ++i )
+	{
+		if( modOutSec[i]->value() == 4 )// Output is being sent to Matrix
+		{
+			if( modOutSecNum[i]->value() - 1 == source )// Output was being sent a matrix box that was moved
+			{
+				modOutSecNum[i]->setValue( destination + 1 );
+			}
+			else if( modOutSecNum[i]->value() - 1 == destination )// Output was being sent a matrix box that was moved
+			{
+				modOutSecNum[i]->setValue( source + 1 );
+			}
+		}
+	}
 }
 
 
@@ -1170,7 +1188,8 @@ void Microwave::playNote( NotePlayHandle * _n, sampleFrame * _working_buffer )
 		_n->m_pluginData = new mSynth(
 					_n,
 				Engine::mixer()->processingSampleRate(),
-					phaseRandArr, modifyModeArr, modifyArr, morphArr, rangeArr, unisonVoicesArr, unisonDetuneArr, unisonMorphArr, unisonModifyArr, morphMaxArr, detuneArr, waveforms, subs, subEnabledArr, subVolArr, subPhaseArr, subPhaseRandArr, subDetuneArr, subMutedArr, subKeytrackArr, subSampLenArr, subNoiseArr, sampLenArr, modInArr, modInNumArr, modInOtherNumArr, modInAmntArr, modInCurveArr, modIn2Arr, modInNum2Arr, modInOtherNum2Arr, modInAmnt2Arr, modInCurve2Arr, modOutSecArr, modOutSigArr, modOutSecNumArr, modCombineTypeArr, modTypeArr, phaseArr, volArr, filtInVolArr, filtTypeArr, filtSlopeArr, filtCutoffArr, filtResoArr, filtGainArr, filtSatuArr, filtWetDryArr, filtBalArr, filtOutVolArr, filtEnabledArr, enabledArr, modEnabledArr, sampGraphs, mutedArr, sampleEnabledArr, sampleGraphEnabledArr, sampleMutedArr, sampleKeytrackingArr, sampleLoopArr, sampleVolumeArr, samplePanningArr, sampleDetuneArr, samplePhaseArr, samplePhaseRandArr, samples, filtFeedbackArr, filtDetuneArr, filtKeytrackingArr, subPanningArr, sampleStartArr, sampleEndArr, panArr, subTempoArr, macroArr, filtMutedArr );
+					phaseRandArr, modifyModeArr, modifyArr, morphArr, rangeArr, unisonVoicesArr, unisonDetuneArr, unisonMorphArr, unisonModifyArr, morphMaxArr, detuneArr, waveforms, subs, subEnabledArr, subVolArr, subRateLimitArr, subPhaseArr, subPhaseRandArr, subDetuneArr, subMutedArr, subKeytrackArr, subSampLenArr, subNoiseArr, sampLenArr, modInArr, modInNumArr, modInAmntArr, modInCurveArr, modIn2Arr, modInNum2Arr, modInAmnt2Arr, modInCurve2Arr, modOutSecArr, modOutSigArr, modOutSecNumArr, modCombineTypeArr, modTypeArr, modType2Arr, phaseArr, volArr, filtInVolArr, filtTypeArr, filtSlopeArr, filtCutoffArr, filtResoArr, filtGainArr, filtSatuArr, filtWetDryArr, filtBalArr, filtOutVolArr, filtEnabledArr, enabledArr, modEnabledArr, sampGraphs, mutedArr, sampleEnabledArr, sampleGraphEnabledArr, sampleMutedArr, sampleKeytrackingArr, sampleLoopArr, sampleVolumeArr, samplePanningArr, sampleDetuneArr, samplePhaseArr, samplePhaseRandArr, samples, filtFeedbackArr, filtDetuneArr, filtKeytrackingArr, subPanningArr, sampleStartArr, sampleEndArr, panArr, subTempoArr, macroArr, filtMutedArr );
+		mwc = dynamic_cast<Microwave *>(_n->instrumentTrack()->instrument());
 	}
 
 	const fpp_t frames = _n->framesLeftForCurrentPeriod();
@@ -1182,10 +1201,10 @@ void Microwave::playNote( NotePlayHandle * _n, sampleFrame * _working_buffer )
 		// Process some samples and ignore the output, depending on the oversampling value.  For example, if the oversampling is set to 4x, it will process 4 samples and output 1 of those.
 		for( int i = 0; i < oversample.value(); ++i )
 		{
-			ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1) );
+			ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1), mwc );
 		}
 		//Get the actual synthesizer output
-		std::vector<float> sample = ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1) );
+		std::vector<float> sample = ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1), mwc );
 
 		for( ch_cnt_t chnl = 0; chnl < DEFAULT_CHANNELS; ++chnl )
 		{
@@ -1246,6 +1265,8 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 					QWidget * _parent ) :
 	InstrumentView( _instrument, _parent )
 {
+	Microwave * b = castModel<Microwave>();
+
 	setAutoFillBackground( true );
 
 	setMouseTracking( true );
@@ -1271,224 +1292,298 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 	morphKnob = new Knob( knobMicrowave, this );
 	morphKnob->setHintText( tr( "Morph" ), "" );
+	ToolTip::add( morphKnob, tr( "The Morph knob chooses which waveform out of the wavetable to play." ) );
 
 	rangeKnob = new Knob( knobMicrowave, this );
 	rangeKnob->setHintText( tr( "Range" ), "" );
+	ToolTip::add( rangeKnob, tr( "The Range knob interpolates (triangularly) the waveforms near the waveform selected by the Morph knob." ) );
 
 	sampLenKnob = new Knob( knobMicrowave, this );
 	sampLenKnob->setHintText( tr( "Waveform Sample Length" ), "" );
+	ToolTip::add( sampLenKnob, tr( "This knob changes the number of samples per waveform there are in the wavetable.  This is useful for finetuning the wavetbale if the wavetable loading was slightly off." ) );
 
 	morphMaxKnob = new Knob( knobMicrowave, this );
 	morphMaxKnob->setHintText( tr( "Morph Max" ), "" );
+	ToolTip::add( morphMaxKnob, tr( "This knob sets the maximum of the Morph knob." ) );
 
 	modifyKnob = new Knob( knobMicrowave, this );
 	modifyKnob->setHintText( tr( "Modify" ), "" );
-
-	unisonVoicesKnob = new Knob( knobSmallMicrowave, this );
-	unisonVoicesKnob->setHintText( tr( "Unison Voices" ), "" );
-
-	unisonDetuneKnob = new Knob( knobSmallMicrowave, this );
-	unisonDetuneKnob->setHintText( tr( "Unison Detune" ), "" );
-
-	unisonMorphKnob = new Knob( knobSmallMicrowave, this );
-	unisonMorphKnob->setHintText( tr( "Unison Morph" ), "" );
-
-	unisonModifyKnob = new Knob( knobSmallMicrowave, this );
-	unisonModifyKnob->setHintText( tr( "Unison Modify" ), "" );
-
-	detuneKnob = new Knob( knobSmallMicrowave, this );
-	detuneKnob->setHintText( tr( "Detune" ), "" );
-
-	phaseKnob = new Knob( knobSmallMicrowave, this );
-	phaseKnob->setHintText( tr( "Phase" ), "" );
-
-	phaseRandKnob = new Knob( knobSmallMicrowave, this );
-	phaseRandKnob->setHintText( tr( "Phase Randomness" ), "" );
-
-	volKnob = new Knob( knobMicrowave, this );
-	volKnob->setHintText( tr( "Volume" ), "" );
+	ToolTip::add( modifyKnob, tr( "The Modify knob warps the wavetable realtime using super math powers.  The formula depends on the Modify Mode dropdown box." ) );
 
 	modifyModeBox = new ComboBox( this );
 	modifyModeBox->setGeometry( 0, 5, 42, 22 );
 	modifyModeBox->setFont( pointSize<8>( modifyModeBox->font() ) );
+	ToolTip::add( modifyModeBox, tr( "The Modify Mode dropdown box chooses the formula for the Modify knob to use to warp the wavetable realtime in cool-sounding ways." ) );
+
+	unisonVoicesKnob = new Knob( knobSmallMicrowave, this );
+	unisonVoicesKnob->setHintText( tr( "Unison Voices" ), "" );
+	ToolTip::add( unisonVoicesKnob, tr( "This knob clones this oscillator multiple times depending on its value, and makes slight changes to the clones depending on the other unison-related knobs." ) );
+
+	unisonDetuneKnob = new Knob( knobSmallMicrowave, this );
+	unisonDetuneKnob->setHintText( tr( "Unison Detune" ), "" );
+	ToolTip::add( unisonDetuneKnob, tr( "This knob detunes every unison voice by a random number that is less than the specified amount." ) );
+
+	unisonMorphKnob = new Knob( knobSmallMicrowave, this );
+	unisonMorphKnob->setHintText( tr( "Unison Morph" ), "" );
+	ToolTip::add( unisonMorphKnob, tr( "This knob changes the wavetable position of each individual unison voice." ) );
+
+	unisonModifyKnob = new Knob( knobSmallMicrowave, this );
+	unisonModifyKnob->setHintText( tr( "Unison Modify" ), "" );
+	ToolTip::add( unisonModifyKnob, tr( "This knob changes the Modify value of each individual unison voice." ) );
+
+	detuneKnob = new Knob( knobSmallMicrowave, this );
+	detuneKnob->setHintText( tr( "Detune" ), "" );
+	ToolTip::add( detuneKnob, tr( "This knob changes the pitch of the oscillator." ) );
+
+	phaseKnob = new Knob( knobSmallMicrowave, this );
+	phaseKnob->setHintText( tr( "Phase" ), "" );
+	ToolTip::add( phaseKnob, tr( "This knob changes the phase (starting position) of the oscillator." ) );
+
+	phaseRandKnob = new Knob( knobSmallMicrowave, this );
+	phaseRandKnob->setHintText( tr( "Phase Randomness" ), "" );
+	ToolTip::add( phaseRandKnob, tr( "This knob chooses a random phase for every note and unison voice.  The phase change will never be larger than this knob's value." ) );
+
+	volKnob = new Knob( knobMicrowave, this );
+	volKnob->setHintText( tr( "Volume" ), "" );
+	ToolTip::add( volKnob, tr( "This knob changes the volume.  What a surprise!" ) );
 
 	enabledToggle = new LedCheckBox( "", this, tr( "Oscillator Enabled" ), LedCheckBox::Green );
+	ToolTip::add( enabledToggle, tr( "This button enables the oscillator.  A disabled oscillator will never do anything and does not use any CPU.  In many cases, the settings of a disabled oscillator will not be saved, so be careful!" ) );
 
 	mutedToggle = new LedCheckBox( "", this, tr( "Oscillator Muted" ), LedCheckBox::Green );
+	ToolTip::add( mutedToggle, tr( "This button mutes the oscillator.  An enabled but muted oscillator will still use CPU and still work as a matrix input, but will not be sent to the audio output." ) );
 
 	panKnob = new Knob( knobMicrowave, this );
 	panKnob->setHintText( tr( "Panning" ), "" );
+	ToolTip::add( panKnob, tr( "This knob lowers the volume in one ear by an amount depending on this knob's value." ) );
 
 
 	sampleEnabledToggle = new LedCheckBox( "", this, tr( "Sample Enabled" ), LedCheckBox::Green );
+	ToolTip::add( sampleEnabledToggle, tr( "This button enables the oscillator.  A disabled oscillator will never do anything and does not use any CPU.  In many cases, the settings of a disabled oscillator will not be saved, so be careful!" ) );
 	sampleGraphEnabledToggle = new LedCheckBox( "", this, tr( "Sample Graph Enabled" ), LedCheckBox::Green );
+	ToolTip::add( sampleGraphEnabledToggle, tr( "This button enables the graph for this oscillator.  On the graph, left/right is time and up/down is position in the sample.  A saw wave in the graph will play the sample normally." ) );
 	sampleMutedToggle = new LedCheckBox( "", this, tr( "Sample Muted" ), LedCheckBox::Green );
+	ToolTip::add( sampleMutedToggle, tr( "This button mutes the oscillator.  An enabled but muted oscillator will still use CPU and still work as a matrix input, but will not be sent to the audio output." ) );
 	sampleKeytrackingToggle = new LedCheckBox( "", this, tr( "Sample Keytracking" ), LedCheckBox::Green );
+	ToolTip::add( sampleKeytrackingToggle, tr( "This button turns keytracking on/off.  Without keytracking, the frequency will be 440 Hz by default, and will ignore the frequency of the played note, but will still follow other methods of detuning the sound." ) );
 	sampleLoopToggle = new LedCheckBox( "", this, tr( "Loop Sample" ), LedCheckBox::Green );
+	ToolTip::add( sampleLoopToggle, tr( "This button turns looping on/off.  When looping is on, the sample will go back to the starting position when it is done playing." ) );
 
 	sampleVolumeKnob = new Knob( knobMicrowave, this );
 	sampleVolumeKnob->setHintText( tr( "Volume" ), "" );
+	ToolTip::add( sampleVolumeKnob, tr( "This, like most other volume knobs, controls the volume." ) );
 	samplePanningKnob = new Knob( knobMicrowave, this );
 	samplePanningKnob->setHintText( tr( "Panning" ), "" );
+	ToolTip::add( samplePanningKnob, tr( "This knob lowers the volume in one ear by an amount depending on this knob's value." ) );
 	sampleDetuneKnob = new Knob( knobSmallMicrowave, this );
 	sampleDetuneKnob->setHintText( tr( "Detune" ), "" );
+	ToolTip::add( sampleDetuneKnob, tr( "This knob changes the pitch (and speed) of the sample." ) );
 	samplePhaseKnob = new Knob( knobSmallMicrowave, this );
 	samplePhaseKnob->setHintText( tr( "Phase" ), "" );
+	ToolTip::add( samplePhaseKnob, tr( "This knob changes the position of the sample, and is updated realtime when automated." ) );
 	samplePhaseRandKnob = new Knob( knobSmallMicrowave, this );
 	samplePhaseRandKnob->setHintText( tr( "Phase Randomness" ), "" );
+	ToolTip::add( samplePhaseRandKnob, tr( "This knob makes the sample start at a random position with every note." ) );
 	sampleStartKnob = new Knob( knobSmallMicrowave, this );
 	sampleStartKnob->setHintText( tr( "Start" ), "" );
+	ToolTip::add( sampleStartKnob, tr( "This knob changes the starting position of the sample." ) );
 	sampleEndKnob = new Knob( knobSmallMicrowave, this );
 	sampleEndKnob->setHintText( tr( "End" ), "" );
+	ToolTip::add( sampleEndKnob, tr( "This knob changes the ending position of the sample." ) );
 
 
 	for( int i = 0; i < 8; ++i )
 	{
 		filtInVolKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtInVolKnob[i]->setHintText( tr( "Input Volume" ), "" );
+		ToolTip::add( filtInVolKnob[i], tr( "This knob changes the input volume of the filter." ) );
 
 		filtTypeBox[i] = new ComboBox( this );
 		filtTypeBox[i]->setGeometry( 1000, 5, 42, 22 );
 		filtTypeBox[i]->setFont( pointSize<8>( filtTypeBox[i]->font() ) );
+		ToolTip::add( filtTypeBox[i], tr( "This dropdown box changes the filter type." ) );
 
 		filtSlopeBox[i] = new ComboBox( this );
 		filtSlopeBox[i]->setGeometry( 1000, 5, 42, 22 );
 		filtSlopeBox[i]->setFont( pointSize<8>( filtSlopeBox[i]->font() ) );
+		ToolTip::add( filtSlopeBox[i], tr( "This dropdown box changes how many times the audio is run through the filter (which changes the slope).  For example, a sound run through a 12 db filter three times will result in a 36 db slope." ) );
 
 		filtCutoffKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtCutoffKnob[i]->setHintText( tr( "Cutoff Frequency" ), "" );
+		ToolTip::add( filtCutoffKnob[i], tr( "This knob changes cutoff frequency of the filter." ) );
 
 		filtResoKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtResoKnob[i]->setHintText( tr( "Resonance" ), "" );
+		ToolTip::add( filtInVolKnob[i], tr( "This knob changes the resonance of the filter." ) );
 
 		filtGainKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtGainKnob[i]->setHintText( tr( "db Gain" ), "" );
+		ToolTip::add( filtGainKnob[i], tr( "This knob changes the gain of the filter.  This only applies to some filter types, e.g. Peak, High Shelf, Low Shelf, etc." ) );
 
 		filtSatuKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtSatuKnob[i]->setHintText( tr( "Saturation" ), "" );
+		ToolTip::add( filtSatuKnob[i], tr( "This knob applies some basic distortion after the filter is applied." ) );
 
 		filtWetDryKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtWetDryKnob[i]->setHintText( tr( "Wet/Dry" ), "" );
+		ToolTip::add( filtWetDryKnob[i], tr( "This knob allows mixing the filtered signal with the unfiltered signal." ) );
 
 		filtBalKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtBalKnob[i]->setHintText( tr( "Balance/Panning" ), "" );
+		ToolTip::add( filtBalKnob[i], tr( "This knob decreases the Wet and increases the Dry of the filter in one ear, depending on the knob's value." ) );
 
 		filtOutVolKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtOutVolKnob[i]->setHintText( tr( "Output Volume" ), "" );
+		ToolTip::add( filtOutVolKnob[i], tr( "This knob changes the output volume of the filter." ) );
 
 		filtEnabledToggle[i] = new LedCheckBox( "", this, tr( "Filter Enabled" ), LedCheckBox::Green );
+		ToolTip::add( filtEnabledToggle[i], tr( "This button enables the filter.  A disabled filter will never do anything and does not use any CPU.  In many cases, the settings of a disabled filter will not be saved, so be careful!" ) );
 
 		filtFeedbackKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtFeedbackKnob[i]->setHintText( tr( "Feedback" ), "" );
+		ToolTip::add( filtFeedbackKnob[i], tr( "This knob sends the specified portion of the filter output back into the input after a certain delay.  This delay effects the pitch, and can be changed using the filter's Detune and Keytracking options." ) );
 
 		filtDetuneKnob[i] = new Knob( knobSmallMicrowave, this );
 		filtDetuneKnob[i]->setHintText( tr( "Detune" ), "" );
+		ToolTip::add( filtDetuneKnob[i], tr( "This knob changes the delay of the filter's feedback to match the specified pitch." ) );
 
 		filtKeytrackingToggle[i] = new LedCheckBox( "", this, tr( "Keytracking" ), LedCheckBox::Green );
+		ToolTip::add( filtKeytrackingToggle[i], tr( "When this is enabled, the delay of the filter's feedback changes to match the frequency of the notes you play." ) );
 
 		filtMutedToggle[i] = new LedCheckBox( "", this, tr( "Muted" ), LedCheckBox::Green );
+		ToolTip::add( filtMutedToggle[i], tr( "This button mutes the filter.  An enabled but muted filter will still use CPU and still work as a matrix input, but will not be sent to the audio output." ) );
 
 		macroKnob[i] = new Knob( knobMicrowave, this );
 		macroKnob[i]->setHintText( tr( "Macro" ) + " " + QString::number(i), "" );
+		ToolTip::add( macroKnob[i], tr( "This knob's value can be used in the Matrix to control many values at the same time, at different amounts." ) );
 	}
 
 	subVolKnob = new Knob( knobMicrowave, this );
 	subVolKnob->setHintText( tr( "Sub Oscillator Volume" ), "" );
+	ToolTip::add( subVolKnob, tr( "This knob, as you probably/hopefully expected, controls the volume of the oscillator." ) );
 
 	subEnabledToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Enabled" ), LedCheckBox::Green );
+	ToolTip::add( subEnabledToggle, tr( "This button enables the oscillator.  A disabled oscillator will never do anything and does not use any CPU.  In many cases, the settings of a disabled oscillator will not be saved, so be careful!" ) );
 
 	subPhaseKnob = new Knob( knobSmallMicrowave, this );
 	subPhaseKnob->setHintText( tr( "Sub Oscillator Phase" ), "" );
+	ToolTip::add( subPhaseKnob, tr( "This knob changes the phase (starting position) of the oscillator." ) );
 
 	subPhaseRandKnob = new Knob( knobSmallMicrowave, this );
 	subPhaseRandKnob->setHintText( tr( "Sub Oscillator Phase Randomness" ), "" );
+	ToolTip::add( subPhaseRandKnob, tr( "This knob chooses a random phase for every note.  The phase change will never be larger than this knob's value." ) );
 
 	subDetuneKnob = new Knob( knobMicrowave, this );
 	subDetuneKnob->setHintText( tr( "Sub Oscillator Pitch" ), "" );
+	ToolTip::add( subDetuneKnob, tr( "This knob changes the pitch of the oscillator." ) );
 
 	subMutedToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Muted" ), LedCheckBox::Green );
+	ToolTip::add( subMutedToggle, tr( "This button mutes the oscillator.  An enabled but muted oscillator will still use CPU and still work as a matrix input, but will not be sent to the audio output." ) );
 
 	subKeytrackToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Keytracking Enabled" ), LedCheckBox::Green );
+	ToolTip::add( subKeytrackToggle, tr( "This button turns keytracking on/off.  Without keytracking, the frequency will be 440 Hz by default, and will ignore the frequency of the played note, but will still follow other methods of detuning the sound." ) );
 
 	subSampLenKnob = new Knob( knobMicrowave, this );
 	subSampLenKnob->setHintText( tr( "Sub Oscillator Sample Length" ), "" );
+	ToolTip::add( subSampLenKnob, tr( "This knob changes the waveform length, which you can see in the graph." ) );
 
 	subNoiseToggle = new LedCheckBox( "", this, tr( "Sub Oscillator Noise Enabled" ), LedCheckBox::Green );
+	ToolTip::add( subNoiseToggle, tr( "This button converts this oscillator into a noise generator.  A random part of the graph is chosen, that value is added to the previous output in the same direction it was going, and when the waveform crosses the top or bottom, the direction changes." ) );
 
 	subPanningKnob = new Knob( knobMicrowave, this );
 	subPanningKnob->setHintText( tr( "Sub Oscillator Panning" ), "" );
+	ToolTip::add( subPanningKnob, tr( "This knob lowers the volume in one ear by an amount depending on this knob's value." ) );
 
 	subTempoKnob = new Knob( knobMicrowave, this );
 	subTempoKnob->setHintText( tr( "Sub Oscillator Tempo" ), "" );
+	ToolTip::add( subTempoKnob, tr( "When this knob is anything other than 0, the oscillator is tempo synced to the specified tempo.  This is meant for the creation of envelopes/LFOs/step sequencers in the Matrix tab, and you'll most likely want to enable the Muted LED when using this." ) );
+
+	subRateLimitKnob = new Knob( knobMicrowave, this );
+	subRateLimitKnob->setHintText( tr( "Sub Oscillator Rate Limit" ), "" );
+	ToolTip::add( subRateLimitKnob, tr( "This knob limits the speed at which the waveform can change." ) );
 
 	for( int i = 0; i < 8; ++i )
 	{
 		modOutSecBox[i] = new ComboBox( this );
 		modOutSecBox[i]->setGeometry( 2000, 5, 42, 22 );
 		modOutSecBox[i]->setFont( pointSize<8>( modOutSecBox[i]->font() ) );
+		ToolTip::add( modOutSecBox[i], tr( "This dropdown box chooses an output for the Matrix Box." ) );
 
 		modOutSigBox[i] = new ComboBox( this );
 		modOutSigBox[i]->setGeometry( 2000, 5, 42, 22 );
 		modOutSigBox[i]->setFont( pointSize<8>( modOutSigBox[i]->font() ) );
+		ToolTip::add( modOutSigBox[i], tr( "This dropdown box chooses which part of the input to send to the Matrix Box (e.g. which parameter to control, which filter, etc.)." ) );
 
 		modOutSecNumBox[i] = new LcdSpinBox( 2, "microwave", this, "Mod Output Number" );
+		ToolTip::add( modOutSecNumBox[i], tr( "This spinbox chooses which part of the input to send to the Matrix Box (e.g. which oscillator)." ) );
 
 		modInBox[i] = new ComboBox( this );
 		modInBox[i]->setGeometry( 2000, 5, 42, 22 );
 		modInBox[i]->setFont( pointSize<8>( modInBox[i]->font() ) );
+		ToolTip::add( modInBox[i], tr( "This dropdown box chooses an input for the Matrix Box." ) );
 
 		modInNumBox[i] = new LcdSpinBox( 2, "microwave", this, "Mod Input Number" );
-
-		modInOtherNumBox[i] = new LcdSpinBox( 2, "microwave", this, "Mod Input Number" );
+		ToolTip::add( modInNumBox[i], tr( "This spinbox chooses which part of the input to send to the Matrix Box (e.g. which oscillator, which filter, etc.)." ) );
 
 		modInAmntKnob[i] = new Knob( knobSmallMicrowave, this );
 		modInAmntKnob[i]->setHintText( tr( "Modulator Amount" ), "" );
+		ToolTip::add( modInAmntKnob[i], tr( "This knob chooses how much of the input to send to the output." ) );
 
 		modInCurveKnob[i] = new Knob( knobSmallMicrowave, this );
 		modInCurveKnob[i]->setHintText( tr( "Modulator Curve" ), "" );
+		ToolTip::add( modInCurveKnob[i], tr( "This knob gives the input value a bias toward the top or bottom" ) );
 
 		modInBox2[i] = new ComboBox( this );
 		modInBox2[i]->setGeometry( 2000, 5, 42, 22 );
 		modInBox2[i]->setFont( pointSize<8>( modInBox2[i]->font() ) );
+		ToolTip::add( modInBox2[i], tr( "This dropdown box chooses an input for the Matrix Box." ) );
 
 		modInNumBox2[i] = new LcdSpinBox( 2, "microwave", this, "Secondary Mod Input Number" );
-
-		modInOtherNumBox2[i] = new LcdSpinBox( 2, "microwave", this, "Secondary Mod Input Number" );
+		ToolTip::add( modInNumBox2[i], tr( "This spinbox chooses which part of the input to send to the Matrix Box (e.g. which oscillator, which filter, etc.)." ) );
 
 		modInAmntKnob2[i] = new Knob( knobSmallMicrowave, this );
 		modInAmntKnob2[i]->setHintText( tr( "Secondary Modulator Amount" ), "" );
+		ToolTip::add( modInAmntKnob2[i], tr( "This knob chooses how much of the input to send to the output." ) );
 
 		modInCurveKnob2[i] = new Knob( knobSmallMicrowave, this );
 		modInCurveKnob2[i]->setHintText( tr( "Secondary Modulator Curve" ), "" );
+		ToolTip::add( modInCurveKnob2[i], tr( "This knob gives the input value a bias toward the top or bottom" ) );
 
 		modEnabledToggle[i] = new LedCheckBox( "", this, tr( "Modulation Enabled" ), LedCheckBox::Green );
+		ToolTip::add( modEnabledToggle[i], tr( "This button enables the Matrix Box.  While disabled, this does not use CPU." ) );
 
 		modCombineTypeBox[i] = new ComboBox( this );
 		modCombineTypeBox[i]->setGeometry( 2000, 5, 42, 22 );
 		modCombineTypeBox[i]->setFont( pointSize<8>( modCombineTypeBox[i]->font() ) );
+		ToolTip::add( modCombineTypeBox[i], tr( "This dropdown box chooses how to combine the two Matrix inputs." ) );
 
 		modTypeToggle[i] = new LedCheckBox( "", this, tr( "Envelope Enabled" ), LedCheckBox::Green );
+		ToolTip::add( modTypeToggle[i], tr( "This button, when enabled, treats the input as an envelope rather than an LFO." ) );
+
+		modType2Toggle[i] = new LedCheckBox( "", this, tr( "Envelope Enabled" ), LedCheckBox::Green );
+		ToolTip::add( modType2Toggle[i], tr( "This button, when enabled, treats the input as an envelope rather than an LFO." ) );
 
 		modUpArrow[i] = new PixmapButton( this, tr( "Move Matrix Section Up" ) );
-		modUpArrow[i]->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"arrowup" ) );
-		modUpArrow[i]->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"arrowup" ) );
-		ToolTip::add( modUpArrow[i], tr( "Move Matrix Section Up" ) );
+		modUpArrow[i]->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowup" ) );
+		modUpArrow[i]->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowup" ) );
+		ToolTip::add( modUpArrow[i], tr( "Move this Matrix Box up" ) );
 
 		modDownArrow[i] = new PixmapButton( this, tr( "Move Matrix Section Down" ) );
-		modDownArrow[i]->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"arrowdown" ) );
-		modDownArrow[i]->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"arrowdown" ) );
-		ToolTip::add( modDownArrow[i], tr( "Move Matrix Section Down" ) );
+		modDownArrow[i]->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowdown" ) );
+		modDownArrow[i]->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowdown" ) );
+		ToolTip::add( modDownArrow[i], tr( "Move this Matrix Box down" ) );
+
+		modNumText[i] = new QLineEdit(this);
+		modNumText[i]->resize(23, 19);
 	}
 
 	visvolKnob = new Knob( knobSmallMicrowave, this );
 	visvolKnob->setHintText( tr( "Visualizer Volume" ), "" );
+	ToolTip::add( visvolKnob, tr( "This knob works as a vertical zoom knob for the visualizer." ) );
 
 	loadChnlKnob = new Knob( knobMicrowave, this );
 	loadChnlKnob->setHintText( tr( "Wavetable Loading Channel" ), "" );
+	ToolTip::add( loadChnlKnob, tr( "This knob chooses whether to load the left or right audio of the selected sample/wavetable." ) );
 
 
 	wtLoad1Knob = new Knob( knobMicrowave, this );
@@ -1508,9 +1603,7 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 	graph->setAutoFillBackground( true );
 	graph->setGraphColor( QColor( 121, 222, 239 ) );
 
-	ToolTip::add( graph, tr ( "Draw your own waveform here "
-				"by dragging your mouse on this graph."
-	));
+	ToolTip::add( graph, tr ( "Draw here by dragging your mouse on this graph." ) );
 
 	pal = QPalette();
 	pal.setBrush( backgroundRole(), PLUGIN_NAME::getIconPixmap("wavegraph") );
@@ -1527,224 +1620,159 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 	matrixForegroundLabel->setAttribute( Qt::WA_TransparentForMouseEvents );
 
 	sinWaveBtn = new PixmapButton( this, tr( "Sine" ) );
-	sinWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sinwave" ) );
-	sinWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sinwave" ) );
-	ToolTip::add( sinWaveBtn,
-			tr( "Sine wave" ) );
+	sinWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "sinwave" ) );
+	sinWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "sinwave" ) );
+	ToolTip::add( sinWaveBtn, tr( "Sine wave" ) );
 
 	triangleWaveBtn = new PixmapButton( this, tr( "Nachos" ) );
-	triangleWaveBtn->setActiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "triwave" ) );
-	triangleWaveBtn->setInactiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "triwave" ) );
-	ToolTip::add( triangleWaveBtn,
-			tr( "Nacho wave" ) );
+	triangleWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "triwave" ) );
+	triangleWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "triwave" ) );
+	ToolTip::add( triangleWaveBtn, tr( "Nacho wave" ) );
 
 	sawWaveBtn = new PixmapButton( this, tr( "Sawsa" ) );
-	sawWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sawwave" ) );
-	sawWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sawwave" ) );
-	ToolTip::add( sawWaveBtn,
-			tr( "Sawsa wave" ) );
+	sawWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "sawwave" ) );
+	sawWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "sawwave" ) );
+	ToolTip::add( sawWaveBtn, tr( "Sawsa wave" ) );
 
 	sqrWaveBtn = new PixmapButton( this, tr( "Sosig" ) );
-	sqrWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-					"sqrwave" ) );
-	sqrWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-					"sqrwave" ) );
-	ToolTip::add( sqrWaveBtn,
-			tr( "Sosig wave" ) );
+	sqrWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "sqrwave" ) );
+	sqrWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "sqrwave" ) );
+	ToolTip::add( sqrWaveBtn, tr( "Sosig wave" ) );
 
-	whiteNoiseWaveBtn = new PixmapButton( this,
-					tr( "Metal Fork" ) );
-	whiteNoiseWaveBtn->setActiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "noisewave" ) );
-	whiteNoiseWaveBtn->setInactiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "noisewave" ) );
-	ToolTip::add( whiteNoiseWaveBtn,
-			tr( "Metal Fork" ) );
+	whiteNoiseWaveBtn = new PixmapButton( this, tr( "Metal Fork" ) );
+	whiteNoiseWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "noisewave" ) );
+	whiteNoiseWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "noisewave" ) );
+	ToolTip::add( whiteNoiseWaveBtn, tr( "Metal Fork" ) );
 
 	usrWaveBtn = new PixmapButton( this, tr( "Takeout" ) );
-	usrWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"fileload" ) );
-	usrWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"fileload" ) );
-	ToolTip::add( usrWaveBtn,
-			tr( "Takeout Menu" ) );
+	usrWaveBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
+	usrWaveBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
+	ToolTip::add( usrWaveBtn, tr( "Takeout Menu" ) );
 
 	smoothBtn = new PixmapButton( this, tr( "Microwave Cover" ) );
-	smoothBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"smoothwave" ) );
-	smoothBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"smoothwave" ) );
-	ToolTip::add( smoothBtn,
-			tr( "Microwave Cover" ) );
+	smoothBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "smoothwave" ) );
+	smoothBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "smoothwave" ) );
+	ToolTip::add( smoothBtn, tr( "Microwave Cover" ) );
 
 
 	sinWave2Btn = new PixmapButton( this, tr( "Sine" ) );
-	sinWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sinwave" ) );
-	sinWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sinwave" ) );
-	ToolTip::add( sinWave2Btn,
-			tr( "Sine wave" ) );
+	sinWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "sinwave" ) );
+	sinWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "sinwave" ) );
+	ToolTip::add( sinWave2Btn, tr( "Sine wave" ) );
 
 	triangleWave2Btn = new PixmapButton( this, tr( "Nachos" ) );
-	triangleWave2Btn->setActiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "triwave" ) );
-	triangleWave2Btn->setInactiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "triwave" ) );
+	triangleWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "triwave" ) );
+	triangleWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "triwave" ) );
 	ToolTip::add( triangleWave2Btn,
 			tr( "Nacho wave" ) );
 
 	sawWave2Btn = new PixmapButton( this, tr( "Sawsa" ) );
-	sawWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sawwave" ) );
-	sawWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"sawwave" ) );
+	sawWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "sawwave" ) );
+	sawWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "sawwave" ) );
 	ToolTip::add( sawWave2Btn,
 			tr( "Sawsa wave" ) );
 
 	sqrWave2Btn = new PixmapButton( this, tr( "Sosig" ) );
-	sqrWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-					"sqrwave" ) );
-	sqrWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-					"sqrwave" ) );
-	ToolTip::add( sqrWave2Btn,
-			tr( "Sosig wave" ) );
+	sqrWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "sqrwave" ) );
+	sqrWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "sqrwave" ) );
+	ToolTip::add( sqrWave2Btn, tr( "Sosig wave" ) );
 
-	whiteNoiseWave2Btn = new PixmapButton( this,
-					tr( "Metal Fork" ) );
-	whiteNoiseWave2Btn->setActiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "noisewave" ) );
-	whiteNoiseWave2Btn->setInactiveGraphic(
-		PLUGIN_NAME::getIconPixmap( "noisewave" ) );
-	ToolTip::add( whiteNoiseWave2Btn,
-			tr( "Metal Fork" ) );
+	whiteNoiseWave2Btn = new PixmapButton( this, tr( "Metal Fork" ) );
+	whiteNoiseWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "noisewave" ) );
+	whiteNoiseWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "noisewave" ) );
+	ToolTip::add( whiteNoiseWave2Btn, tr( "Metal Fork" ) );
 
-	usrWave2Btn = new PixmapButton( this, tr( "Takeout" ) );
-	usrWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"fileload" ) );
-	usrWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"fileload" ) );
-	ToolTip::add( usrWave2Btn,
-			tr( "Takeout Menu" ) );
+	usrWave2Btn = new PixmapButton( this, tr( "Takeout Menu" ) );
+	usrWave2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
+	usrWave2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
+	ToolTip::add( usrWave2Btn, tr( "Takeout Menu" ) );
 
 	smooth2Btn = new PixmapButton( this, tr( "Microwave Cover" ) );
-	smooth2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"smoothwave" ) );
-	smooth2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"smoothwave" ) );
-	ToolTip::add( smooth2Btn,
-			tr( "Microwave Cover" ) );
+	smooth2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "smoothwave" ) );
+	smooth2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "smoothwave" ) );
+	ToolTip::add( smooth2Btn, tr( "Microwave Cover" ) );
 
 
 	tab1Btn = new PixmapButton( this, tr( "Wavetable Tab" ) );
-	tab1Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab1_active" ) );
-	tab1Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab1_active" ) );
-	ToolTip::add( tab1Btn,
-			tr( "Wavetable Tab" ) );
+	tab1Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1_active" ) );
+	tab1Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1_active" ) );
+	ToolTip::add( tab1Btn, tr( "Wavetable Tab" ) );
 
 	tab2Btn = new PixmapButton( this, tr( "Sub Tab" ) );
-	tab2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab2" ) );
-	tab2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab2" ) );
-	ToolTip::add( tab2Btn,
-			tr( "Sub Tab" ) );
+	tab2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2" ) );
+	tab2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2" ) );
+	ToolTip::add( tab2Btn, tr( "Sub Tab" ) );
 
 	tab3Btn = new PixmapButton( this, tr( "Sample Tab" ) );
-	tab3Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab3" ) );
-	tab3Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab3" ) );
-	ToolTip::add( tab3Btn,
-			tr( "Sample Tab" ) );
+	tab3Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3" ) );
+	tab3Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3" ) );
+	ToolTip::add( tab3Btn, tr( "Sample Tab" ) );
 
 	tab4Btn = new PixmapButton( this, tr( "Matrix Tab" ) );
-	tab4Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab4" ) );
-	tab4Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab4" ) );
-	ToolTip::add( tab4Btn,
-			tr( "Matrix Tab" ) );
+	tab4Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4" ) );
+	tab4Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4" ) );
+	ToolTip::add( tab4Btn, tr( "Matrix Tab" ) );
 
 	tab5Btn = new PixmapButton( this, tr( "Effect Tab" ) );
-	tab5Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab5" ) );
-	tab5Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab5" ) );
-	ToolTip::add( tab5Btn,
-			tr( "Effect Tab" ) );
+	tab5Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5" ) );
+	tab5Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5" ) );
+	ToolTip::add( tab5Btn, tr( "Effect Tab" ) );
 
 	tab6Btn = new PixmapButton( this, tr( "Miscellaneous Tab" ) );
-	tab6Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab6" ) );
-	tab6Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"tab6" ) );
-	ToolTip::add( tab6Btn,
-			tr( "Miscellaneous Tab" ) );
+	tab6Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6" ) );
+	tab6Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6" ) );
+	ToolTip::add( tab6Btn, tr( "Miscellaneous Tab" ) );
 
 
 	mainFlipBtn = new PixmapButton( this, tr( "Flip to other knobs" ) );
-	mainFlipBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"arrowup" ) );
-	mainFlipBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"arrowdown" ) );
-	ToolTip::add( mainFlipBtn,
-			tr( "Flip to other knobs" ) );
+	mainFlipBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowup" ) );
+	mainFlipBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowdown" ) );
+	ToolTip::add( mainFlipBtn, tr( "Flip to other knobs" ) );
 	mainFlipBtn->setCheckable(true);
 
 	subFlipBtn = new PixmapButton( this, tr( "Flip to other knobs" ) );
-	subFlipBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"arrowup" ) );
-	subFlipBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"arrowdown" ) );
-	ToolTip::add( subFlipBtn,
-			tr( "Flip to other knobs" ) );
+	subFlipBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowup" ) );
+	subFlipBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "arrowdown" ) );
+	ToolTip::add( subFlipBtn, tr( "Flip to other knobs" ) );
 	subFlipBtn->setCheckable(true);
 
 
 	manualBtn = new PixmapButton( this, tr( "Manual" ) );
-	manualBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"manual_active" ) );
-	manualBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"manual_inactive" ) );
-	ToolTip::add( manualBtn,
-			tr( "Manual" ) );
+	manualBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "manual_active" ) );
+	manualBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "manual_inactive" ) );
+	ToolTip::add( manualBtn, tr( "Manual" ) );
+
+
+	normalizeBtn = new PixmapButton( this, tr( "Normalize Wavetable" ) );
+	normalizeBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "normalize_button" ) );
+	normalizeBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "normalize_button" ) );
+	ToolTip::add( normalizeBtn, tr( "Normalize Wavetable" ) );
+
+	desawBtn = new PixmapButton( this, tr( "De-saw Wavetable" ) );
+	desawBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "desaw_button" ) );
+	desawBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "desaw_button" ) );
+	ToolTip::add( desawBtn, tr( "De-saw Wavetable" ) );
 
 
 	XBtn = new PixmapButton( this, tr( "Leave wavetable loading tab" ) );
-	XBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"xbtn" ) );
-	XBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-						"xbtn" ) );
-	ToolTip::add( XBtn,
-			tr( "Leave wavetable loading tab" ) );
+	XBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "xbtn" ) );
+	XBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "xbtn" ) );
+	ToolTip::add( XBtn, tr( "Leave wavetable loading tab" ) );
 
 
 	visualizeToggle = new LedCheckBox( "", this, tr( "Visualize" ), LedCheckBox::Green );
 
 	openWavetableButton = new PixmapButton( this );
 	openWavetableButton->setCursor( QCursor( Qt::PointingHandCursor ) );
-	openWavetableButton->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"fileload" ) );
-	openWavetableButton->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"fileload" ) );
+	openWavetableButton->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
+	openWavetableButton->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
 	connect( openWavetableButton, SIGNAL( clicked() ), this, SLOT( openWavetableFileBtnClicked() ) );
 	ToolTip::add( openWavetableButton, tr( "Open wavetable" ) );
 
 	confirmLoadButton = new PixmapButton( this );
 	confirmLoadButton->setCursor( QCursor( Qt::PointingHandCursor ) );
-	confirmLoadButton->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"fileload" ) );
-	confirmLoadButton->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"fileload" ) );
+	confirmLoadButton->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
+	confirmLoadButton->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
 	connect( confirmLoadButton, SIGNAL( clicked() ), this, SLOT( confirmWavetableLoadClicked() ) );
 	ToolTip::add( confirmLoadButton, tr( "Load Wavetable" ) );
 
@@ -1761,13 +1789,11 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 	loadModeBox = new ComboBox( this );
 	loadModeBox->setGeometry( 0, 0, 202, 22 );
 	loadModeBox->setFont( pointSize<8>( loadModeBox->font() ) );
-	
+
 	openSampleButton = new PixmapButton( this );
 	openSampleButton->setCursor( QCursor( Qt::PointingHandCursor ) );
-	openSampleButton->setActiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"fileload" ) );
-	openSampleButton->setInactiveGraphic( PLUGIN_NAME::getIconPixmap(
-							"fileload" ) );
+	openSampleButton->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
+	openSampleButton->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "fileload" ) );
 
 	scrollKnob = new Knob( knobSmallMicrowave, this );
 	scrollKnob->hide();
@@ -1807,7 +1833,7 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 	ToolTip::add( openSampleButton, tr( "Open sample" ) );
 
 
-	
+
 	connect( sinWaveBtn, SIGNAL (clicked () ), this, SLOT ( sinWaveClicked() ) );
 	connect( triangleWaveBtn, SIGNAL ( clicked () ), this, SLOT ( triangleWaveClicked() ) );
 	connect( sawWaveBtn, SIGNAL (clicked () ), this, SLOT ( sawWaveClicked() ) );
@@ -1827,6 +1853,11 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 	connect( XBtn, SIGNAL (clicked () ), this, SLOT ( XBtnClicked() ) );
 
+	connect( normalizeBtn, SIGNAL (clicked () ), this, SLOT ( normalizeClicked() ) );
+	connect( desawBtn, SIGNAL (clicked () ), this, SLOT ( desawClicked() ) );
+
+
+	// This is a mess, but for some reason just entering a number without a variable didn't work...
 	int ii = 1;
 	connect( tab1Btn, &PixmapButton::clicked, this, [this, ii]() { tabBtnClicked(ii); } );
 	ii = 2;
@@ -1850,25 +1881,27 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 
 
-	connect( &castModel<Microwave>()->scroll, SIGNAL( dataChanged( ) ), this, SLOT( updateScroll( ) ) );
+	connect( &b->scroll, SIGNAL( dataChanged( ) ), this, SLOT( updateScroll( ) ) );
 
 	connect( scrollKnob, SIGNAL( sliderReleased( ) ), this, SLOT( scrollReleased( ) ) );
 
-	connect( &castModel<Microwave>()->mainNum, SIGNAL( dataChanged( ) ), this, SLOT( mainNumChanged( ) ) );
+	connect( &b->mainNum, SIGNAL( dataChanged( ) ), this, SLOT( mainNumChanged( ) ) );
 
-	connect( &castModel<Microwave>()->subNum, SIGNAL( dataChanged( ) ), this, SLOT( subNumChanged( ) ) );
+	connect( &b->subNum, SIGNAL( dataChanged( ) ), this, SLOT( subNumChanged( ) ) );
 
-	connect( &castModel<Microwave>()->sampNum, SIGNAL( dataChanged( ) ), this, SLOT( sampNumChanged( ) ) );
+	connect( &b->sampNum, SIGNAL( dataChanged( ) ), this, SLOT( sampNumChanged( ) ) );
 
 	connect( manualBtn, SIGNAL (clicked ( bool ) ), this, SLOT ( manualBtnClicked() ) );
 
 	for( int i = 0; i < 8; ++i )
 	{
-		connect( castModel<Microwave>()->modOutSec[i], &ComboBoxModel::dataChanged, this, [this, i]() { modOutSecChanged(i); }, Qt::DirectConnection );
-		connect( castModel<Microwave>()->modIn[i], &ComboBoxModel::dataChanged, this, [this, i]() { modInChanged(i); }, Qt::DirectConnection );
+		connect( b->modOutSec[i], &ComboBoxModel::dataChanged, this, [this, i]() { modOutSecChanged(i); }, Qt::DirectConnection );
+		connect( b->modIn[i], &ComboBoxModel::dataChanged, this, [this, i]() { modInChanged(i); }, Qt::DirectConnection );
 
 		connect( modUpArrow[i], &PixmapButton::clicked, this, [this, i]() { modUpClicked(i); } );
 		connect( modDownArrow[i], &PixmapButton::clicked, this, [this, i]() { modDownClicked(i); } );
+
+		connect( b->modEnabled[i], &BoolModel::dataChanged, this, [this, i]() { modEnabledChanged(); } );
 	}
 
 	updateScroll();
@@ -1953,7 +1986,7 @@ void MicrowaveView::updateScroll()
 	volKnob->move( 87 - scrollVal, 172 + mainIsNotFlipped );
 	enabledToggle->move( 95 - scrollVal, 220 + mainIsFlipped );
 	mutedToggle->move( 129 - scrollVal, 220 + mainIsFlipped );
-	panKnob->move( 55 - scrollVal, 130 + mainIsNotFlipped );
+	panKnob->move( 122 - scrollVal, 172 + mainIsNotFlipped );
 
 
 	sampleEnabledToggle->move( 86 + 500 - scrollVal, 229 );
@@ -2000,32 +2033,31 @@ void MicrowaveView::updateScroll()
 	subNoiseToggle->move( 147 + 250 - scrollVal, 229 + subIsFlipped );
 	subPanningKnob->move( 55 + 250 - scrollVal, 172 + subIsFlipped );
 	subTempoKnob->move( 35 + 250 - scrollVal, 172 + subIsNotFlipped );
+	subRateLimitKnob->move( 63 + 250 - scrollVal, 172 + subIsNotFlipped );
 
 	for( int i = 0; i < 8; ++i )
 	{
 		int matrixRemainder = modScrollVal % 460;
 		int matrixDivide = modScrollVal / 460 * 4;
 
-		modInBox[i]->move( 43 + 750 - scrollVal, i*115+57 - matrixRemainder );
-		modInNumBox[i]->move( 88 + 750 - scrollVal, i*115+57 - matrixRemainder );
-		modInOtherNumBox[i]->move( 122 + 750 - scrollVal, i*115+57 - matrixRemainder );
-		modInAmntKnob[i]->move( 167 + 750 - scrollVal, i*115+53 - matrixRemainder );
-		modInCurveKnob[i]->move( 192 + 750 - scrollVal, i*115+53 - matrixRemainder );
+		modInBox[i]->move( 45 + 750 - scrollVal, i*115+57 - matrixRemainder );
+		modInNumBox[i]->move( 90 + 750 - scrollVal, i*115+57 - matrixRemainder );
+		modInAmntKnob[i]->move( 136 + 750 - scrollVal, i*115+53 - matrixRemainder );
+		modInCurveKnob[i]->move( 161 + 750 - scrollVal, i*115+53 - matrixRemainder );
 		modOutSecBox[i]->move( 27 + 750 - scrollVal, i*115+88 - matrixRemainder );
 		modOutSigBox[i]->move( 69 + 750 - scrollVal, i*115+88 - matrixRemainder );
 		modOutSecNumBox[i]->move( 112 + 750 - scrollVal, i*115+88 - matrixRemainder );
-		modInBox2[i]->move( 43 + 750 - scrollVal, i*115+118 - matrixRemainder );
-		modInNumBox2[i]->move( 88 + 750 - scrollVal, i*115+118 - matrixRemainder );
-		modInOtherNumBox2[i]->move( 122 + 750 - scrollVal, i*115+118 - matrixRemainder );
-		modInAmntKnob2[i]->move( 167 + 750 - scrollVal, i*115+114 - matrixRemainder );
-		modInCurveKnob2[i]->move( 192 + 750 - scrollVal, i*115+114 - matrixRemainder );
+		modInBox2[i]->move( 45 + 750 - scrollVal, i*115+118 - matrixRemainder );
+		modInNumBox2[i]->move( 90 + 750 - scrollVal, i*115+118 - matrixRemainder );
+		modInAmntKnob2[i]->move( 136 + 750 - scrollVal, i*115+114 - matrixRemainder );
+		modInCurveKnob2[i]->move( 161 + 750 - scrollVal, i*115+114 - matrixRemainder );
 		modEnabledToggle[i]->move( 27 + 750 - scrollVal, i*115+36 - matrixRemainder );
 		modCombineTypeBox[i]->move( 149 + 750 - scrollVal, i*115+88 - matrixRemainder );
-		modTypeToggle[i]->move( 195 + 750 - scrollVal, i*115+98 - matrixRemainder );
-
+		modTypeToggle[i]->move( 195 + 750 - scrollVal, i*115+67 - matrixRemainder );
+		modType2Toggle[i]->move( 195 + 750 - scrollVal, i*115+128 - matrixRemainder );
 		modUpArrow[i]->move( 181 + 750 - scrollVal, i*115+37 - matrixRemainder );
 		modDownArrow[i]->move( 199 + 750 - scrollVal, i*115+37 - matrixRemainder );
-
+		modNumText[i]->move( 192 + 750 - scrollVal, i*115+89 - matrixRemainder );
 
 		if( i+matrixDivide < 64 )
 		{
@@ -2035,20 +2067,22 @@ void MicrowaveView::updateScroll()
 
 			modInBox[i]->setModel( b->modIn[i+matrixDivide] );
 			modInNumBox[i]->setModel( b->modInNum[i+matrixDivide] );
-			modInOtherNumBox[i]->setModel( b->modInOtherNum[i+matrixDivide] );
 			modInAmntKnob[i]->setModel( b->modInAmnt[i+matrixDivide] );
 			modInCurveKnob[i]->setModel( b->modInCurve[i+matrixDivide] );
 
 			modInBox2[i]->setModel( b->modIn2[i+matrixDivide] );
 			modInNumBox2[i]->setModel( b->modInNum2[i+matrixDivide] );
-			modInOtherNumBox2[i]->setModel( b->modInOtherNum2[i+matrixDivide] );
 			modInAmntKnob2[i]->setModel( b->modInAmnt2[i+matrixDivide] );
 			modInCurveKnob2[i]->setModel( b->modInCurve2[i+matrixDivide] );
 
 			modEnabledToggle[i]->setModel( b->modEnabled[i+matrixDivide] );
 
 			modCombineTypeBox[i]->setModel( b->modCombineType[i+matrixDivide] );
+
 			modTypeToggle[i]->setModel( b->modType[i+matrixDivide] );
+			modType2Toggle[i]->setModel( b->modType2[i+matrixDivide] );
+
+			modNumText[i]->setText( QString::number(i+matrixDivide+1) );
 		}
 	}
 
@@ -2123,24 +2157,20 @@ void MicrowaveView::updateScroll()
 	wtLoad3Knob->move( 1500 + 90 - scrollVal, 48 );
 	wtLoad4Knob->move( 1500 + 120 - scrollVal, 48 );
 
-	/*QRect rect(scrollVal, 0, 250, 250);
-	pal.setBrush( backgroundRole(), fullArtworkImg.copy(rect) );
-	setPalette( pal );*/
+	normalizeBtn->move( 175 + 1500 - scrollVal, 233 );
+	desawBtn->move( 115 + 1500 - scrollVal, 233 );
 }
 
 
 // Snaps scroll to nearest tab when the scroll knob is released.
 void MicrowaveView::scrollReleased()
 {
-	const float scrollVal = castModel<Microwave>()->scroll.value();
-	castModel<Microwave>()->scroll.setValue( round(scrollVal-0.25) );
+	Microwave * b = castModel<Microwave>();
+
+	const float scrollVal = b->scroll.value();
+	b->scroll.setValue( round(scrollVal-0.25) );
 }
 
-
-void MicrowaveView::mouseMoveEvent( QMouseEvent * _me )
-{
-	//castModel<Microwave>()->morph[0]->setValue(_me->x());
-}
 
 
 void MicrowaveView::wheelEvent( QWheelEvent * _me )
@@ -2215,6 +2245,7 @@ void MicrowaveView::subNumChanged()
 	subNoiseToggle->setModel( b->subNoise[subNumValue] );
 	subPanningKnob->setModel( b->subPanning[subNumValue] );
 	subTempoKnob->setModel( b->subTempo[subNumValue] );
+	subRateLimitKnob->setModel( b->subRateLimit[subNumValue] );
 }
 
 
@@ -2306,7 +2337,6 @@ void MicrowaveView::modOutSecChanged( int i )
 				modOutSecNumBox[i-matrixDivide]->hide();
 				b->modOutSig[i]->clear();
 				mod8model( b->modOutSig[i] )
-				//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
 				break;
 			}
 			case 6:// Filter Parameters
@@ -2315,7 +2345,6 @@ void MicrowaveView::modOutSecChanged( int i )
 				modOutSecNumBox[i-matrixDivide]->hide();
 				b->modOutSig[i]->clear();
 				filtersignalsmodel( b->modOutSig[i] )
-				//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
 				break;
 			}
 			case 7:// Macro
@@ -2324,7 +2353,6 @@ void MicrowaveView::modOutSecChanged( int i )
 				modOutSecNumBox[i-matrixDivide]->hide();
 				b->modOutSig[i]->clear();
 				mod8model( b->modOutSig[i] )
-				//b->modOutSecNum[i]->setRange( 1.f, 8.f, 1.f );
 				break;
 			}
 			default:
@@ -2351,34 +2379,51 @@ void MicrowaveView::modInChanged( int i )
 			case 0:
 			{
 				modInNumBox[i-matrixDivide]->hide();
-				modInOtherNumBox[i-matrixDivide]->hide();
 				break;
 			}
 			case 1:// Main OSC
 			{
 				modInNumBox[i-matrixDivide]->show();
-				modInOtherNumBox[i-matrixDivide]->hide();
 				b->modInNum[i]->setRange( 1, 8, 1 );
 				break;
 			}
 			case 2:// Sub OSC
 			{
 				modInNumBox[i-matrixDivide]->show();
-				modInOtherNumBox[i-matrixDivide]->hide();
 				b->modInNum[i]->setRange( 1, 64, 1 );
 				break;
 			}
-			case 3:// Filter
+			case 3:// Sample OSC
 			{
 				modInNumBox[i-matrixDivide]->show();
-				modInOtherNumBox[i-matrixDivide]->hide();
 				b->modInNum[i]->setRange( 1, 8, 1 );
 				break;
 			}
-			case 4:// Sample OSC
+			case 4:// Filter
 			{
 				modInNumBox[i-matrixDivide]->show();
-				modInOtherNumBox[i-matrixDivide]->hide();
+				b->modInNum[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 5:// Velocity
+			{
+				modInNumBox[i-matrixDivide]->hide();
+				break;
+			}
+			case 6:// Panning
+			{
+				modInNumBox[i-matrixDivide]->hide();
+				break;
+			}
+			case 7:// Humanizer
+			{
+				modInNumBox[i-matrixDivide]->show();
+				b->modInNum[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 8:// Macro
+			{
+				modInNumBox[i-matrixDivide]->show();
 				b->modInNum[i]->setRange( 1, 8, 1 );
 				break;
 			}
@@ -2394,98 +2439,74 @@ void MicrowaveView::tabChanged( int tabnum )
 {
 	Microwave * b = castModel<Microwave>();
 
-	if( b->currentTab != tabnum )
+	b->currentTab = tabnum;
+
+	updateBackground();
+
+	if( tabnum != 0 )
 	{
-		b->currentTab = tabnum;
+		tab1Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1" ) );
+		tab1Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1" ) );
+	}
+	else
+	{
+		tab1Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1_active" ) );
+		tab1Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1_active" ) );
+	}
 
-		updateBackground();
+	if( tabnum != 1 )
+	{
+		tab2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2" ) );
+		tab2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2" ) );
+	}
+	else
+	{
+		tab2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2_active" ) );
+		tab2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2_active" ) );
+	}
 
-		switch( tabnum )
-		{
-			case 0:// Wavetable
-			{
-				b->graph.setLength( 2048 );
-				mainNumChanged();
-				break;
-			}
-			case 1:// Sub
-			{
-				subNumChanged();// Graph length is set in here
-				break;
-			}
-			case 2:// Sample
-			{
-				b->graph.setLength( 128 );
-				sampNumChanged();
-				break;
-			}
-		}
+	if( tabnum != 2 )
+	{
+		tab3Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3" ) );
+		tab3Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3" ) );
+	}
+	else
+	{
+		tab3Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3_active" ) );
+		tab3Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3_active" ) );
+	}
 
-		if( tabnum != 0 )
-		{
-			tab1Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1" ) );
-			tab1Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1" ) );
-		}
-		else
-		{
-			tab1Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1_active" ) );
-			tab1Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab1_active" ) );
-		}
+	if( tabnum != 3 )
+	{
+		tab4Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4" ) );
+		tab4Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4" ) );
+	}
+	else
+	{
+		tab4Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4_active" ) );
+		tab4Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4_active" ) );
+	}
 
-		if( tabnum != 1 )
-		{
-			tab2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2" ) );
-			tab2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2" ) );
-		}
-		else
-		{
-			tab2Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2_active" ) );
-			tab2Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab2_active" ) );
-		}
+	if( tabnum != 4 )
+	{
+		tab5Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5" ) );
+		tab5Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5" ) );
+	}
+	else
+	{
+		tab5Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5_active" ) );
+		tab5Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5_active" ) );
+	}
 
-		if( tabnum != 2 )
-		{
-			tab3Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3" ) );
-			tab3Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3" ) );
-		}
-		else
-		{
-			tab3Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3_active" ) );
-			tab3Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab3_active" ) );
-		}
-
-		if( tabnum != 3 )
-		{
-			tab4Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4" ) );
-			tab4Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4" ) );
-		}
-		else
-		{
-			tab4Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4_active" ) );
-			tab4Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab4_active" ) );
-		}
-
-		if( tabnum != 4 )
-		{
-			tab5Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5" ) );
-			tab5Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5" ) );
-		}
-		else
-		{
-			tab5Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5_active" ) );
-			tab5Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab5_active" ) );
-		}
-
-		if( tabnum != 5 )
-		{
-			tab6Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6" ) );
-			tab6Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6" ) );
-		}
-		else
-		{
-			tab6Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6_active" ) );
-			tab6Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6_active" ) );
-		}
+	if( tabnum != 5 )
+	{
+		tab6Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6" ) );
+		tab6Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6" ) );
+	}
+	else
+	{
+		tab6Btn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6_active" ) );
+		tab6Btn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "tab6_active" ) );
 	}
 }
 
@@ -2644,6 +2665,54 @@ void MicrowaveView::XBtnClicked()
 }
 
 
+void MicrowaveView::normalizeClicked()
+{
+	Microwave * b = castModel<Microwave>();
+
+	int oscilNum = b->mainNum.value() - 1;
+
+	for( int i = 0; i < 256; ++i )
+	{
+		float highestVolume = 0;
+		for( int j = 0; j < 2048; ++j )
+		{
+			highestVolume = abs(b->waveforms[oscilNum][(i*2048)+j]) > highestVolume ? abs(b->waveforms[oscilNum][(i*2048)+j]) : highestVolume;
+		}
+		if( highestVolume )
+		{
+			float multiplierThing = 1.f / highestVolume;
+			for( int j = 0; j < 2048; ++j )
+			{
+				b->waveforms[oscilNum][(i*2048)+j] *= multiplierThing;
+			}
+		}
+	}
+
+	Engine::getSong()->setModified();
+}
+
+void MicrowaveView::desawClicked()
+{
+	Microwave * b = castModel<Microwave>();
+
+	int oscilNum = b->mainNum.value() - 1;
+
+	float start;
+	float end;
+	for( int j = 0; j < 256; ++j )
+	{
+		start = -b->waveforms[oscilNum][j*2048];
+		end = -b->waveforms[oscilNum][j*2048+2047];
+		for( int i = 0; i < 2048; ++i )
+		{
+			b->waveforms[oscilNum][j*2048+i] += (i/2048.f)*end + ((2048.f-i)/2048.f)*start;
+		}
+	}
+
+	Engine::getSong()->setModified();
+}
+
+
 
 void MicrowaveView::modUpClicked( int i )
 {
@@ -2750,7 +2819,7 @@ void MicrowaveView::openWavetableFile( QString fileName )
 			{
 				for( int i = 0; i < 524288; ++i )
 				{
-					if ( i <= lengthOfSample / 2.f )
+					if ( i <= lengthOfSample )
 					{
 						b->waveforms[oscilNum][i] = sampleBuffer->userWaveSample( i/lengthOfSample, channel );
 					}
@@ -2809,7 +2878,7 @@ void MicrowaveView::openWavetableFile( QString fileName )
 				{
 					break;
 				}
-				
+
 				cout<<sample_rate/period<<std::flush;
 
 				// Now see if the zero crossings can aid in getting the pitch even more accurate:
@@ -2874,116 +2943,8 @@ void MicrowaveView::openWavetableFile( QString fileName )
 
 				break;
 			}
-/*			case 2:// Zero-crossing method
-			{
-				const int gap = b->wtLoad1.value();
-				std::vector<float> crossings;
-				int loc = 0;
-				
-				while( sampleBuffer->userWaveSample( loc / lengthOfSample, channel ) == 0 )// Skips any silence at the beginning
-				{
-					++loc;
-				}
-
-				crossings.push_back( loc == 0 ? loc : loc - 1 );
-
-				bool above = ( sampleBuffer->userWaveSample( loc, channel ) > 0 );
-				bool startsAsAbove = above;// Whether the waveform starts positive or negative
-
-				while( loc <= lengthOfSample )
-				{
-					++loc;
-					temp1 = sampleBuffer->userWaveSample( loc, channel ) > 0;
-					if( temp1 != above )
-					{
-						if( temp1 == startsAsAbove )
-						{
-							crossings.push_back( loc );
-						}
-						above = !above;
-						loc += gap;
-					}
-				}
-
-				crossings.push_back( loc );
-				crossings.push_back( lengthOfSample );
-				loc = 0;
-
-				for( int j = 0; j < 256; ++j )
-				{
-					if( crossings.size() < j )
-					{
-						break;
-					}
-					temp1 = crossings[j];
-					temp2 = crossings[j+1];
-					for( int i = 0; i < 2048; ++i )
-					{
-						b->waveforms[oscilNum][j*2048+i] = sampleBuffer->userWaveSample( ((i/2048.f)*(temp2-temp1)+temp1)/lengthOfSample, channel );
-					}
-				}
-				
-				break;
-			}*/
-			case 7:// Squeeze entire sample into 256 waveforms
-			{
-				b->morphMax[oscilNum]->setValue( 524288.f/b->sampLen[oscilNum]->value() );
-				b->morphMaxChanged();
-				for( int i = 0; i < 524288; ++i )
-				{
-					b->waveforms[oscilNum][i] = sampleBuffer->userWaveSample( qMin( i/524288.f, 1.f ), channel );
-				}
-				break;
-			}
-			case 11:// Delete this.  Makes end of waveform match with beginning.
-			{
-				for( int i = 0; i < 524288; ++i )
-				{
-					if( fmod( i, b->sampLen[oscilNum]->value() ) >= b->sampLen[oscilNum]->value() - 200 )
-					{
-						float thing = ( -fmod(i, b->sampLen[oscilNum]->value() ) + b->sampLen[oscilNum]->value() ) / 200.f;
-						b->waveforms[oscilNum][i] = (b->waveforms[oscilNum][i] * thing) + ((-thing+1) * b->waveforms[oscilNum][int(i-(fmod( i, b->sampLen[oscilNum]->value() )))]);
-					}
-				}
-				break;
-			}
 		}
-
-		//DON'T DELETE THIS
-
-		/*float start;
-		float end;
-		for( int j = 0; j < 256; ++j )
-		{
-			start = -b->waveforms[oscilNum][j*2048];
-			end = -b->waveforms[oscilNum][j*2048+2047];
-			for( int i = 0; i < 2048; ++i )
-			{
-				b->waveforms[oscilNum][j*2048+i] += (i/2048.f)*end + ((2048.f-i)/2048.f)*start;
-			}
-		}*/
-		
-		
 		sampleBuffer->dataUnlock();
-	}
-	else //Delete this
-	{
-		for( int i = 0; i < 256; ++i )
-		{
-			float highestVolume = 0;
-			for( int j = 0; j < 2048; ++j )
-			{
-				highestVolume = abs(b->waveforms[oscilNum][(i*2048)+j]) > highestVolume ? abs(b->waveforms[oscilNum][(i*2048)+j]) : highestVolume;
-			}
-			if( highestVolume )
-			{
-				float multiplierThing = 1.f / highestVolume;
-				for( int j = 0; j < 2048; ++j )
-				{
-					b->waveforms[oscilNum][(i*2048)+j] *= multiplierThing;
-				}
-			}
-		}
 	}
 
 	sharedObject::unref( sampleBuffer );
@@ -3015,7 +2976,7 @@ void MicrowaveView::openSampleFile()
 		float lengthOfSample = ((filelength/1000.f)*sample_rate);//in samples
 		b->samples[oscilNum][0].clear();
 		b->samples[oscilNum][1].clear();
-		
+
 		for( int i = 0; i < lengthOfSample; ++i )
 		{
 			b->samples[oscilNum][0].push_back(sampleBuffer->userWaveSample(i/lengthOfSample, 0));
@@ -3093,11 +3054,10 @@ void MicrowaveView::dragEnterEvent( QDragEnterEvent * _dee )
 
 
 // Initializes mSynth (when a new note is played).  Clone all of the arrays storing the knob values so they can be changed by modulation.
-mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float * _phaseRandArr, int * _modifyModeArr, float * _modifyArr, float * _morphArr, float * _rangeArr, float * _unisonVoicesArr, float * _unisonDetuneArr, float * _unisonMorphArr, float * _unisonModifyArr, float * _morphMaxArr, float * _detuneArr, float waveforms[8][524288], float * _subsArr, bool * _subEnabledArr, float * _subVolArr, float * _subPhaseArr, float * _subPhaseRandArr, float * _subDetuneArr, bool * _subMutedArr, bool * _subKeytrackArr, float * _subSampLenArr, bool * _subNoiseArr, int * _sampLenArr, int * _modInArr, int * _modInNumArr, int * _modInOtherNumArr, float * _modInAmntArr, float * _modInCurveArr, int * _modIn2Arr, int * _modInNum2Arr, int * _modInOtherNum2Arr, float * _modInAmnt2Arr, float * _modInCurve2Arr, int * _modOutSecArr, int * _modOutSigArr, int * _modOutSecNumArr, int * modCombineTypeArr, bool * modTypeArr, float * _phaseArr, float * _volArr, float * _filtInVolArr, int * _filtTypeArr, int * _filtSlopeArr, float * _filtCutoffArr, float * _filtResoArr, float * _filtGainArr, float * _filtSatuArr, float * _filtWetDryArr, float * _filtBalArr, float * _filtOutVolArr, bool * _filtEnabledArr, bool * _enabledArr, bool * _modEnabledArr, float * sampGraphs, bool * _mutedArr, bool * _sampleEnabledArr, bool * _sampleGraphEnabledArr, bool * _sampleMutedArr, bool * _sampleKeytrackingArr, bool * _sampleLoopArr, float * _sampleVolumeArr, float * _samplePanningArr, float * _sampleDetuneArr, float * _samplePhaseArr, float * _samplePhaseRandArr, std::vector<float> (&samples)[8][2], float * _filtFeedbackArr, float * _filtDetuneArr, bool * _filtKeytrackingArr, float * _subPanningArr, float * _sampleStartArr, float * _sampleEndArr, float * _panArr, float * _subTempoArr, float * _macroArr, bool * _filtMutedArr ) :
+mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float * _phaseRandArr, int * _modifyModeArr, float * _modifyArr, float * _morphArr, float * _rangeArr, float * _unisonVoicesArr, float * _unisonDetuneArr, float * _unisonMorphArr, float * _unisonModifyArr, float * _morphMaxArr, float * _detuneArr, float waveforms[8][524288], float * _subsArr, bool * _subEnabledArr, float * _subVolArr, float * _subRateLimitArr, float * _subPhaseArr, float * _subPhaseRandArr, float * _subDetuneArr, bool * _subMutedArr, bool * _subKeytrackArr, float * _subSampLenArr, bool * _subNoiseArr, int * _sampLenArr, int * _modInArr, int * _modInNumArr, float * _modInAmntArr, float * _modInCurveArr, int * _modIn2Arr, int * _modInNum2Arr, float * _modInAmnt2Arr, float * _modInCurve2Arr, int * _modOutSecArr, int * _modOutSigArr, int * _modOutSecNumArr, int * modCombineTypeArr, bool * modTypeArr, bool * modType2Arr, float * _phaseArr, float * _volArr, float * _filtInVolArr, int * _filtTypeArr, int * _filtSlopeArr, float * _filtCutoffArr, float * _filtResoArr, float * _filtGainArr, float * _filtSatuArr, float * _filtWetDryArr, float * _filtBalArr, float * _filtOutVolArr, bool * _filtEnabledArr, bool * _enabledArr, bool * _modEnabledArr, float * sampGraphs, bool * _mutedArr, bool * _sampleEnabledArr, bool * _sampleGraphEnabledArr, bool * _sampleMutedArr, bool * _sampleKeytrackingArr, bool * _sampleLoopArr, float * _sampleVolumeArr, float * _samplePanningArr, float * _sampleDetuneArr, float * _samplePhaseArr, float * _samplePhaseRandArr, std::vector<float> (&samples)[8][2], float * _filtFeedbackArr, float * _filtDetuneArr, bool * _filtKeytrackingArr, float * _subPanningArr, float * _sampleStartArr, float * _sampleEndArr, float * _panArr, float * _subTempoArr, float * _macroArr, bool * _filtMutedArr ) :
 	nph( _nph ),
 	sample_rate( _sample_rate )
 {
-
 	memcpy( modifyModeVal, _modifyModeArr, sizeof(int) * 8 );
 	memcpy( modifyVal, _modifyArr, sizeof(float) * 8 );
 	memcpy( morphVal, _morphArr, sizeof(float) * 8 );
@@ -3111,12 +3071,10 @@ mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float *
 	memcpy( sampLen, _sampLenArr, sizeof(int) * 8 );
 	memcpy( modIn, _modInArr, sizeof(int) * 64 );
 	memcpy( modInNum, _modInNumArr, sizeof(int) * 64 );
-	memcpy( modInOtherNum, _modInOtherNumArr, sizeof(int) * 64 );
 	memcpy( modInAmnt, _modInAmntArr, sizeof(float) * 64 );
 	memcpy( modInCurve, _modInCurveArr, sizeof(float) * 64 );
 	memcpy( modIn2, _modIn2Arr, sizeof(int) * 64 );
 	memcpy( modInNum2, _modInNum2Arr, sizeof(int) * 64 );
-	memcpy( modInOtherNum2, _modInOtherNum2Arr, sizeof(int) * 64 );
 	memcpy( modInAmnt2, _modInAmnt2Arr, sizeof(float) * 64 );
 	memcpy( modInCurve2, _modInCurve2Arr, sizeof(float) * 64 );
 	memcpy( modOutSec, _modOutSecArr, sizeof(int) * 64 );
@@ -3167,8 +3125,10 @@ mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float *
 	memcpy( pan, _panArr, sizeof(float) * 8 );
 	memcpy( subTempo, _subTempoArr, sizeof(float) * 64 );
 	memcpy( modType, modTypeArr, sizeof(bool) * 64 );
+	memcpy( modType2, modType2Arr, sizeof(bool) * 64 );
 	memcpy( filtMuted, _filtMutedArr, sizeof(bool) * 8 );
 	memcpy( phaseRand, _phaseRandArr, sizeof(int) * 8 );
+	memcpy( subRateLimit, _subRateLimitArr, sizeof(float) * 64 );
 
 	memcpy( sampLen, _sampLenArr, sizeof(int) * 8 );
 
@@ -3186,6 +3146,7 @@ mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float *
 	for( int i=0; i < 64; ++i )
 	{
 		sample_subindex[i] = 0;
+		subNoiseDirection[i] = 1;
 	}
 
 	for( int i=0; i < 8; ++i )
@@ -3203,7 +3164,7 @@ mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float *
 			unisonDetuneAmounts[i][j] = ((rand()/float(RAND_MAX))*2.f)-1;
 		}
 	}
-	
+
 }
 
 
@@ -3214,13 +3175,13 @@ mSynth::~mSynth()
 
 // The heart of Microwave.  As you probably learned in anatomy class, hearts actually aren't too pretty.  This is no exception.
 // This is the part that puts everything together and calculates an audio output.
-std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate )
+std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate, Microwave * mwc )
 {
 
 	++noteDuration;
 
 	sample_t sample[8][32] = {{0}};
-	
+
 	for( int l = 0; l < maxModEnabled; ++l )// maxModEnabled keeps this from looping 64 times every sample, saving a lot of CPU
 	{
 		if( modEnabled[l] )
@@ -3338,7 +3299,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				}
 				case 1:
 				{
-					if( modType[l] )// If envelope
+					if( modType2[l] )// If envelope
 					{
 						curModVal2[0] = lastMainOscEnvVal[modInNum2[l]-1][0];
 						curModVal2[1] = lastMainOscEnvVal[modInNum2[l]-1][1];
@@ -3352,7 +3313,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				}
 				case 2:
 				{
-					if( modType[l] )// If envelope
+					if( modType2[l] )// If envelope
 					{
 						curModVal2[0] = lastSubEnvVal[modInNum2[l]-1][0];
 						curModVal2[1] = lastSubEnvVal[modInNum2[l]-1][1];
@@ -3484,7 +3445,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					curModVal2Curve[1] = curModVal2[1] + (modInAmnt2[l] / 100.f);
 				}
 			}
-			
+
 			switch( modCombineType[l] )
 			{
 				case 0:// Add Bidirectional
@@ -3655,6 +3616,13 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 						{
 							subSampLen[modOutSecNum[l]-1] = qMax( 0, int( subSampLen[modOutSecNum[l]-1] + comboModValMono * 2048.f ) );
 							modValType.push_back( 33 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 6:// Send input to Rate Limit
+						{
+							subRateLimit[modOutSecNum[l]-1] = qMax( 0.f, subRateLimit[modOutSecNum[l]-1] + comboModValMono * 2.f );
+							modValType.push_back( 82 );
 							modValNum.push_back( modOutSecNum[l]-1 );
 							break;
 						}
@@ -3866,7 +3834,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 			temp1 = filtInVol[l] * 0.01f;
 			filtInputs[l][0] *= temp1;
 			filtInputs[l][1] *= temp1;
-			
+
 			if( filtKeytracking[l] )
 			{
 				temp1 = round( sample_rate / detuneWithCents( nph->frequency(), filtDetune[l] ) );
@@ -3905,7 +3873,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				scale = pow( 2.7182818284590452353602874713527f, (1-p)*1.386249f );
 				r = reso*scale;
 			}
-			
+
 			for( int m = 0; m < filtSlope[l] + 1; ++m )// m is the slope number.  So if m = 2, then the sound is going from a 24 db to a 36 db slope, for example.
 			{
 				if( m )
@@ -3977,10 +3945,10 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 							A = exp10( dbgain / 40 );
 							temp2 = 2*sqrt(A)*alpha;
 							b0 =    A*( (A+1) + (A-1)*temp1 + temp2 );
-							b1 = -2*A*( (A-1) + (A+1)*temp1                   );
+							b1 = -2*A*( (A-1) + (A+1)*temp1         );
 							b2 =    A*( (A+1) + (A-1)*temp1 - temp2 );
 							a0 =        (A+1) - (A-1)*temp1 + temp2;
-							a1 =    2*( (A-1) - (A+1)*temp1                   );
+							a1 =    2*( (A-1) - (A+1)*temp1         );
 							a2 =        (A+1) - (A-1)*temp1 - temp2;
 							break;
 						}
@@ -3989,12 +3957,12 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 							temp1 = -2 * cos(w0);
 							temp2 = sin(w0);
 							alpha = temp2*sinh( (log(2)/log(2.7182818284590452353602874713527))/2 * reso * w0/temp2 );
-							A = pow( 10, dbgain / 40 );
+							A = exp10( dbgain / 40 );
 							b0 =   1 + alpha*A;
 							b1 =  temp1;
 							b2 =   1 - alpha*A;
 							a0 =   1 + alpha/A;
-							a1 =  -temp1;
+							a1 =  temp1;
 							a2 =   1 - alpha/A;
 							break;
 						}
@@ -4104,7 +4072,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 
 				filtPrevSampIn[l][m][2][0] = filtPrevSampIn[l][m][1][0];
 				filtPrevSampIn[l][m][2][1] = filtPrevSampIn[l][m][1][1];
-			
+
 				filtPrevSampIn[l][m][1][0] = filtInputs[l][0];
 				filtPrevSampIn[l][m][1][1] = filtInputs[l][1];
 
@@ -4113,10 +4081,10 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 
 				filtPrevSampOut[l][m][3][0] = filtPrevSampOut[l][m][2][0];
 				filtPrevSampOut[l][m][3][1] = filtPrevSampOut[l][m][2][1];
-			
+
 				filtPrevSampOut[l][m][2][0] = filtPrevSampOut[l][m][1][0];
 				filtPrevSampOut[l][m][2][1] = filtPrevSampOut[l][m][1][1];
-			
+
 				filtPrevSampOut[l][m][1][0] = filtPrevSampOut[l][m][0][0];
 				filtPrevSampOut[l][m][1][1] = filtPrevSampOut[l][m][0][1];
 			}
@@ -4154,11 +4122,11 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 			sample_morerealindex[i][l] = fmod( ( sample_realindex[i][l] + ( fmod( phase[i], 100.f ) * sampLen[i] * 0.01f ) ), sampLen[i] );// Calculates phase
 
 			unisonVoicesMinusOne = unisonVoices[i] - 1;// unisonVoices[i] - 1 is needed many times, which is why unisonVoicesMinusOne exists
-	
+
 			noteFreq = unisonVoicesMinusOne ? detuneWithCents( nph->frequency(), unisonDetuneAmounts[i][l]*unisonDetune[i]+detuneVal[i] ) : detuneWithCents( nph->frequency(), detuneVal[i] );// Calculates frequency depending on detune and unison detune
-	
+
 			sample_step[i][l] = sampLen[i] * (  noteFreq / sample_rate );
-	
+
 			if( unisonVoicesMinusOne )// Figures out Morph and Modify values for individual unison voices
 			{
 				if( unisonMorph[i] )
@@ -4173,7 +4141,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					modifyVal[i] = qBound( 0.f, temp1 - ( unisonModify[i] * 0.5f ) + modifyVal[i], sampLen[i]-1.f);// SampleLength - 1 = ModifyMax
 				}
 			}
-	
+
 			sample_length_modify[i][l] = 0;
 			switch( modifyModeVal[i] )// Horrifying formulas for the various Modify Modes
 			{
@@ -4262,7 +4230,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					{}
 			}
 			//sample_morerealindex[i][l] = qBound( 0.f, sample_morerealindex[i][l], sampLen[i] + sample_length_modify[i][l] - 1);// Keeps sample index within bounds
-			
+
 			sample[i][l] = 0;
 
 			loopStart = qMax( 0.f, morphVal[i] - rangeVal[i] ) + 1;
@@ -4304,11 +4272,6 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				}
 			}
 
-			if( rangeVal[i] - 1 )
-			{
-				sample[i][l] /= rangeVal[i];// Decreases volume so Range value doesn't make things too loud
-			}
-	
 			switch( modifyModeVal[i] )// More horrifying formulas for the various Modify Modes
 			{
 				case 1:// Pulse Width
@@ -4349,21 +4312,27 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				case 16:// Sine
 				{
 					temp1 = (modifyVal[i]/( sampLen[i] - 1 ));
-					sample[i][l] = sin( sample[i][l] * F_PI );
+					sample[i][l] = sin( sample[i][l] * ( F_PI * temp1 * 8 + 1 ) );
 					break;
 				}
 				case 17:// Atan
 				{
 					temp1 = (modifyVal[i]/( sampLen[i] - 1 ));
-					sample[i][l] = atan( sample[i][l] * F_PI );
+					sample[i][l] = atan( sample[i][l] * ( F_PI * temp1 * 8 + 1 ) );
+					break;
+				}
+				case 18:// Sin(x)/x
+				{
+					temp1 = (modifyVal[i]/( sampLen[i] - 1 ));
+					sample[i][l] = sin( F_PI * sample[i][l] * ( F_PI * temp1 * 8 + 1 ) ) / ( F_PI * sample[i][l] * ( F_PI * temp1 * 8 + 1 ) ) - 0.5;
 					break;
 				}
 				default:
 					{}
 			}
-	
+
 			sample_realindex[i][l] += sample_step[i][l];
-	
+
 			// check overflow
 			temp1 = sampLen[i] + sample_length_modify[i][l];
 			while( sample_realindex[i][l] >= temp1 )
@@ -4371,7 +4340,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				sample_realindex[i][l] -= temp1;
 				lastMainOscEnvDone[l] = true;
 			}
-	
+
 			sample[i][l] = sample[i][l] * vol[i] * 0.01f;
 		}
 	}
@@ -4396,7 +4365,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					noteFreq = subKeytrack[l] ? detuneWithCents( nph->frequency(), subDetune[l] ) : detuneWithCents( 440.f, subDetune[l] );
 				}
 				sample_step_sub = subSampLen[l] / ( sample_rate / noteFreq );
-	
+
 				subsample[l][0] = ( subVol[l] * 0.01f ) * subs[int( sample_subindex[l] + ( subPhase[l] * subSampLen[l] ) ) % int(subSampLen[l]) + ( 2048 * l )];
 				subsample[l][1] = subsample[l][0];
 
@@ -4409,51 +4378,12 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					subsample[l][0] *= ( 100.f - subPanning[l] ) * 0.01f;
 				}
 
-				/* That is all that is needed for the sub oscillator calculations.
-		
-				(To the tune of Hallelujah)
-		
-					There was a Happy CPU
-				No processing power to chew through
-				In this wonderful synthesis brew
-					Hallelujah
-		
-					But with some wavetable synthesis
-				Your CPU just blows a kiss
-				And leaves you there despite your miss
-					Hallelujah
-		
-				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
-		
-					Your music ambition lays there, dead
-				Can't get your ideas out of your head
-				Because your computer's slower than lead
-					Hallelujah
-		
-					Sometimes you may try and try
-				To keep your ping from saying goodbye
-				Leaving you to die and cry
-					Hallelujah
-		
-				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
-		
-					But what is this, an alternative?
-				Sub oscillators supported native
-				To prevent CPU obliteratives
-					Hallelujah
-		
-					Your music has come back to life
-				CPU problems cut off like a knife
-				Sub oscillators removing your strife
-					Hallelujah
-		
-				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
-		
-				*cool outro*
-					
-		
-				*/
-		
+				if( subRateLimit[l] )
+				{
+					subsample[l][0] = lastSubVal[l][0] + qBound( -subRateLimit[l], subsample[l][0] - lastSubVal[l][0], subRateLimit[l] );
+					subsample[l][1] = lastSubVal[l][1] + qBound( -subRateLimit[l], subsample[l][1] - lastSubVal[l][1], subRateLimit[l] );
+				}
+
 				lastSubVal[l][0] = subsample[l][0];// Store value for matrix
 				lastSubVal[l][1] = subsample[l][1];
 
@@ -4463,41 +4393,92 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 					lastSubEnvVal[l][1] = subsample[l][1];
 				}
 
-				// Mutes sub after saving value for modulation if the muted option is on
-				if( subMuted[l] )
-				{
-					subsample[l][0] = 0;
-					subsample[l][1] = 0;
-				}
-		
 				sample_subindex[l] += sample_step_sub;
-		
+
 				// move waveform position back if it passed the end of the waveform
 				while ( sample_subindex[l] >= subSampLen[l] )
 				{
 					sample_subindex[l] -= subSampLen[l];
 					lastSubEnvDone[l] = true;
 				}
+
+				/* That is all that is needed for the sub oscillator calculations.
+
+				(To the tune of Hallelujah)
+
+					There was a Happy CPU
+				No processing power to chew through
+				In this wonderful synthesis brew
+					Hallelujah
+
+					But with some wavetable synthesis
+				Your CPU just blows a kiss
+				And leaves you there despite your miss
+					Hallelujah
+
+				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
+
+					Your music ambition lays there, dead
+				Can't get your ideas out of your head
+				Because your computer's slower than lead
+					Hallelujah
+
+					Sometimes you may try and try
+				To keep your ping from saying goodbye
+				Leaving you to die and cry
+					Hallelujah
+
+				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
+
+					But what is this, an alternative?
+				Sub oscillators supported native
+				To prevent CPU obliteratives
+					Hallelujah
+
+					Your music has come back to life
+				CPU problems cut off like a knife
+				Sub oscillators removing your strife
+					Hallelujah
+
+				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
+
+				*cool outro*
+
+
+				*/
 			}
 			else// sub oscillator is noise
 			{
 				noiseSampRand = fastRandf( subSampLen[l] ) - 1;
-				
-				subsample[l][0] = qBound( -1.f, ( lastSubVal[l][0]+(subs[int(noiseSampRand)] / 8.f) ) / 1.2f, 1.f ) * ( subVol[l] * 0.01f );// Division by 1.2f to tame DC offset
+
+				temp1 = ( subs[int(noiseSampRand)] * subNoiseDirection[l] ) + lastSubVal[l][0];
+				if( temp1 > 1 || temp1 < -1 )
+				{
+					subNoiseDirection[l] *= -1;
+					temp1 = ( subs[int(noiseSampRand)] * subNoiseDirection[l] ) + lastSubVal[l][0];
+				}
+
+				subsample[l][0] = temp1 * ( subVol[l] * 0.01f );// Division by 1.2f to tame DC offset
 				subsample[l][1] = subsample[l][0];
-				
+
+				if( subRateLimit[l] )
+				{
+					subsample[l][0] = lastSubVal[l][0] + qBound( -subRateLimit[l], subsample[l][0] - lastSubVal[l][0], subRateLimit[l] );
+					subsample[l][1] = lastSubVal[l][1] + qBound( -subRateLimit[l], subsample[l][1] - lastSubVal[l][1], subRateLimit[l] );
+				}
+
 				lastSubVal[l][0] = subsample[l][0];
 				lastSubVal[l][1] = subsample[l][1];
-				
+
 				lastSubEnvVal[l][0] = subsample[l][0];// Store envelope value for matrix
 				lastSubEnvVal[l][1] = subsample[l][1];
-				
-				// Mutes sub after saving value for modulation if the muted option is on
-				if( subMuted[l] )
-				{
-					subsample[l][0] = 0;
-					subsample[l][1] = 0;
-				}
+			}
+
+			// Mutes sub after saving value for modulation if the muted option is on
+			if( subMuted[l] )
+			{
+				subsample[l][0] = 0;
+				subsample[l][1] = 0;
 			}
 		}
 		else
@@ -4579,7 +4560,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 			{
 				samplesample[l][0] *= ( 100.f - samplePanning[l] ) * 0.01f;
 			}
-	
+
 			lastSampleVal[l][0] = samplesample[l][0];// Store value for modulation
 			lastSampleVal[l][1] = samplesample[l][1];// Store value for modulation
 
@@ -4594,7 +4575,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				samplesample[l][0] = 0;
 				samplesample[l][1] = 0;
 			}
-	
+
 			sample_sampleindex[l] += sample_step_sample;
 		}
 		else
@@ -4625,19 +4606,46 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				temp1 = unisonVoices[i] * 0.5f;
 				sampleMainOsc[0] /= temp1;
 				sampleMainOsc[1] /= temp1;
-				
+
+				if( pan[i] )
+				{
+					if( pan[i] < 0 )
+					{
+						sampleMainOsc[1] *= ( 100.f + pan[i] ) * 0.01f;
+					}
+					else
+					{
+						sampleMainOsc[0] *= ( 100.f - pan[i] ) * 0.01f;
+					}
+				}
+
 				sampleAvg[0] += sampleMainOsc[0];
 				sampleAvg[1] += sampleMainOsc[1];
 			}
 			else
 			{
-				sampleAvg[0] += sample[i][0];
-				sampleAvg[1] += sample[i][0];
+				sampleMainOsc[0] = sample[i][0];
+				sampleMainOsc[1] = sample[i][0];
+
+				if( pan[i] )
+				{
+					if( pan[i] < 0 )
+					{
+						sampleMainOsc[1] *= ( 100.f + pan[i] ) * 0.01f;
+					}
+					else
+					{
+						sampleMainOsc[0] *= ( 100.f - pan[i] ) * 0.01f;
+					}
+				}
+
+				sampleAvg[0] += sampleMainOsc[0];
+				sampleAvg[1] += sampleMainOsc[1];
 			}
 
 			lastMainOscVal[i][0] = sampleAvg[0];// Store results for modulations
 			lastMainOscVal[i][1] = sampleAvg[1];
-			
+
 			if( !lastMainOscEnvDone[i] )
 			{
 				lastMainOscEnvVal[i][0] = lastMainOscVal[i][0];
@@ -4685,10 +4693,10 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 	// Refresh all modulated values back to the value of the knob.
 	for( int i = 0; i < modValType.size(); ++i )
 	{
-		refreshValue( modValType[0], modValNum[0] );// Possible CPU problem
-		modValType.erase(modValType.begin());
-		modValNum.erase(modValNum.begin());
+		refreshValue( modValType[i], modValNum[i], mwc );// Possible CPU problem
 	}
+	modValType.clear();
+	modValNum.clear();
 
 	return sampleAvg;
 }
@@ -4699,7 +4707,7 @@ inline float mSynth::detuneWithCents( float pitchValue, float detuneValue )
 {
 	if( detuneValue )// Avoids expensive exponentiation if no detuning is necessary
 	{
-		return pitchValue * std::exp2( detuneValue / 1200.f );
+		return pitchValue * std::exp2( detuneValue / 1200.f ); 
 	}
 	else
 	{
@@ -4709,9 +4717,8 @@ inline float mSynth::detuneWithCents( float pitchValue, float detuneValue )
 
 
 // At the end of mSynth::nextStringSample, this will refresh all modulated values back to the value of the knob.
-void mSynth::refreshValue( int which, int num )
+void mSynth::refreshValue( int which, int num, Microwave * mwc )
 {
-	Microwave * mwc = dynamic_cast<Microwave *>(nph->instrumentTrack()->instrument());
 	switch( which )
 	{
 		case 1: morphVal[num] = mwc->morph[num]->value(); break;
@@ -4749,12 +4756,10 @@ void mSynth::refreshValue( int which, int num )
 		case 34: subNoise[num] = mwc->subNoise[num]->value(); break;
 		case 35: modIn[num] = mwc->modIn[num]->value(); break;
 		case 36: modInNum[num] = mwc->modInNum[num]->value(); break;
-		case 37: modInOtherNum[num] = mwc->modInOtherNum[num]->value(); break;
 		case 38: modInAmnt[num] = mwc->modInAmnt[num]->value(); break;
 		case 39: modInCurve[num] = mwc->modInCurve[num]->value(); break;
 		case 40: modIn2[num] = mwc->modIn2[num]->value(); break;
 		case 41: modInNum2[num] = mwc->modInNum2[num]->value(); break;
-		case 42: modInOtherNum2[num] = mwc->modInOtherNum2[num]->value(); break;
 		case 43: modInAmnt2[num] = mwc->modInAmnt2[num]->value(); break;
 		case 44: modInCurve2[num] = mwc->modInCurve2[num]->value(); break;
 		case 45: modOutSec[num] = mwc->modOutSec[num]->value(); break;
@@ -4786,6 +4791,8 @@ void mSynth::refreshValue( int which, int num )
 		case 78: macro[num] = mwc->macro[num]->value(); break;
 		case 79: filtMuted[num] = mwc->filtMuted[num]->value(); break;
 		case 80: phaseRand[num] = mwc->phaseRand[num]->value(); break;
+		case 81: modType2[num] = mwc->modType2[num]->value(); break;
+		case 82: subRateLimit[num] = mwc->subRateLimit[num]->value(); break;
 	}
 }
 
@@ -4930,7 +4937,7 @@ QString MicrowaveManualView::s_manualText=
 "<br>"
 "Even when the modify is not in use, having the Modify Mode set to None will use (sometimes significantly) less CPU than if it is set to something else.<br>"
 "<br>"
-"When using modify, expect the largest CPU hit from modes that require accessing other parts of the waveform to work (e.g. Squarify and Pulsify).<br>"
+"When using modify, expect the largest CPU hit from modes that require accessing other parts of the waveform to work (e.g. Squarify and Pulsify), especially with high Range values.<br>"
 "<br>"
 "Oversampling results in an almost exact multiplication in processing power needed.  So 8x oversampling will use approximately 4x as much CPU as 2x oversampling.<br>"
 "<br>"
