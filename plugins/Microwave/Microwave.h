@@ -111,7 +111,9 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Phase" ), make_unique<PluginPixmapLoader>( "sin" ) );\
 		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );\
-		name ->addItem( tr( "Rate Limit" ), make_unique<PluginPixmapLoader>( "letter_r" ) );
+		name ->addItem( tr( "Rate Limit" ), make_unique<PluginPixmapLoader>( "letter_r" ) );\
+		name ->addItem( tr( "Unison Voice Number" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
+		name ->addItem( tr( "Unison Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );
 
 #define samplesignalsmodel( name )\
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
@@ -302,10 +304,9 @@ private:
 	FloatModel * subPanning[64];
 	FloatModel * subTempo[64];
 	FloatModel * subRateLimit[64];
+	FloatModel * subUnisonNum[64];
+	FloatModel * subUnisonDetune[64];
 
-	
-	float sample_realindex[8][32] = {{0}};
-	float sample_subindex[64] = {0};
 	float waveforms[8][524288] = {{0}};
 	int currentTab = 0;
 	float subs[131072] = {0};
@@ -336,6 +337,8 @@ private:
 
 	FloatModel  * macro[8];
 
+	BoolModel  removeDC;
+
 	SampleBuffer sampleBuffer;
 
 	//Below is for passing to mSynth initialization
@@ -349,7 +352,7 @@ private:
 	float unisonModifyArr[8] = {0};
 	float morphMaxArr[8] = {0};
 	float detuneArr[8] = {0};
-	int sampLenArr[8] = {0};
+	float sampLenArr[8] = {0};
 	int modInArr[64] = {0};
 	int modInNumArr[64] = {0};
 	float modInAmntArr[64] = {0};
@@ -385,6 +388,8 @@ private:
 	float subPanningArr[64] = {0};
 	float subTempoArr[64] = {0};
 	float subRateLimitArr[64] = {0};
+	float subUnisonNumArr[64] = {0};
+	float subUnisonDetuneArr[64] = {0};
 	
 	float filtInVolArr[8] = {0};
 	int filtTypeArr[8] = {0};
@@ -534,6 +539,8 @@ private:
 
 	PixmapButton * manualBtn;
 
+	PixmapButton * removeDCBtn;
+
 	Knob * morphKnob;
 	Knob * rangeKnob;
 	Knob * visvolKnob;
@@ -612,6 +619,8 @@ private:
 	Knob * subPanningKnob;
 	Knob * subTempoKnob;
 	Knob * subRateLimitKnob;
+	Knob * subUnisonNumKnob;
+	Knob * subUnisonDetuneKnob;
 
 	LedCheckBox * sampleEnabledToggle;
 	LedCheckBox * sampleGraphEnabledToggle;
@@ -671,10 +680,10 @@ public:
 	mSynth( NotePlayHandle * _nph,
 			const sample_rate_t _sample_rate,
 			float * phaseRand,
-			int * modifyModeVal, float * modifyVal, float * morphVal, float * rangeVal, float * unisonVoices, float * unisonDetune, float * unisonMorph, float * unisonModify, float * morphMaxVal, float * detuneVal, float waveforms[8][524288], float * subs, bool * subEnabled, float * subVol, float * subRateLimit, float * subPhase, float * subPhaseRand, float * subDetune, bool * subMuted, bool * subKeytrack, float * subSampLen, bool * subNoise, int * sampLen, int * modIn, int * modInNum, float * modInAmnt, float * modInCurve, int * modIn2, int * modInNum2, float * modInAmnt2, float * modInCurve2, int * modOutSec, int * modOutSig, int * modOutSecNum, int * modCombineType, bool * modType, bool * modType2, float * phase, float * vol, float * filtInVol, int * filtType, int * filtSlope, float * filtCutoff, float * filtReso, float * filtGain, float * filtSatu, float * filtWetDry, float * filtBal, float * filtOutVol, bool * filtEnabled, bool * enabled, bool * modEnabled, float * sampGraphs, bool * muted, bool * sampleEnabled, bool * sampleGraphEnabled, bool * sampleMuted, bool * sampleKeytracking, bool * sampleLoop, float * sampleVolume, float * samplePanning, float * sampleDetune, float * samplePhase, float * samplePhaseRand, std::vector<float> (&samples)[8][2], float * filtFeedback, float * filtDetune, bool * filtKeytracking, float * subPanning, float * sampleStart, float * sampleEnd, float * pan, float * subTempo, float * macro, bool * filtMuted );
+			int * modifyModeVal, float * modifyVal, float * morphVal, float * rangeVal, float * unisonVoices, float * unisonDetune, float * unisonMorph, float * unisonModify, float * morphMaxVal, float * detuneVal, float waveforms[8][524288], float * subs, bool * subEnabled, float * subVol, float * subRateLimit, float * subPhase, float * subPhaseRand, float * subDetune, bool * subMuted, bool * subKeytrack, float * subSampLen, bool * subNoise, float * sampLen, int * modIn, int * modInNum, float * modInAmnt, float * modInCurve, int * modIn2, int * modInNum2, float * modInAmnt2, float * modInCurve2, int * modOutSec, int * modOutSig, int * modOutSecNum, int * modCombineType, bool * modType, bool * modType2, float * phase, float * vol, float * filtInVol, int * filtType, int * filtSlope, float * filtCutoff, float * filtReso, float * filtGain, float * filtSatu, float * filtWetDry, float * filtBal, float * filtOutVol, bool * filtEnabled, bool * enabled, bool * modEnabled, float * sampGraphs, bool * muted, bool * sampleEnabled, bool * sampleGraphEnabled, bool * sampleMuted, bool * sampleKeytracking, bool * sampleLoop, float * sampleVolume, float * samplePanning, float * sampleDetune, float * samplePhase, float * samplePhaseRand, std::vector<float> (&samples)[8][2], float * filtFeedback, float * filtDetune, bool * filtKeytracking, float * subPanning, float * sampleStart, float * sampleEnd, float * pan, float * subTempo, float * macro, bool * filtMuted, float * subUnisonNum, float * subUnisonDetune );
 	virtual ~mSynth();
 	
-	std::vector<float> nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate, Microwave * mwc );
+	std::vector<float> nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate, Microwave * mwc, bool removeDC );
 
 	inline float detuneWithCents( float pitchValue, float detuneValue );
 
@@ -682,7 +691,7 @@ public:
 
 private:
 	float sample_realindex[8][32] = {{0}};
-	float sample_subindex[64] = {0};
+	float sample_subindex[64][32] = {{0}};
 	float sample_sampleindex[8] = {0};
 	NotePlayHandle* nph;
 	const sample_rate_t sample_rate;
@@ -705,7 +714,7 @@ private:
 	bool lastSubEnvDone[64] = {false};
 	bool lastSampleEnvDone[8] = {false};
 
-	int subNoiseDirection[64] = {0};
+	int subNoiseDirection[64][32] = {{0}};
 
 	int loopStart = 0;
 	int loopEnd = 0;
@@ -746,7 +755,7 @@ private:
 	float unisonModify[8];
 	float morphMaxVal[8];
 	float detuneVal[8];
-	int sampLen[8];
+	float sampLen[8];
 	int modIn[64];
 	int modInNum[64];
 	float modInAmnt[64];
@@ -781,6 +790,8 @@ private:
 	float subPanning[64];
 	float subTempo[64];
 	float subRateLimit[64];
+	float subUnisonNum[64];
+	float subUnisonDetune[64];
 	
 	float filtInVol[8];
 	int filtType[8];
@@ -835,6 +846,7 @@ private:
 	float humanizer[8] = {0};
 
 	float unisonDetuneAmounts[8][32] = {{0}};
+	float subUnisonDetuneAmounts[64][32] = {{0}};
 
 	float temp1;
 	float temp2;
@@ -852,12 +864,15 @@ private:
 	float sample_length_modify[8][32] = {{0}};
 
 	float unisonVoicesMinusOne = 0;
+	float subUnisonVoicesMinusOne = 0;
 
 	bool updateFrequency = 0;
 
 	int filtFeedbackLoc[8] = {0};
 
 	float macro[8];
+
+	float averageSampleValue[2] = {0};// For DC offset removal
 
 	friend class Microwave;
 	

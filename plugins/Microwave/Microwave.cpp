@@ -249,6 +249,8 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		subTempo[i] = new FloatModel( 0.f, 0.f, 999.f, 1.f, this, tr( "Tempo" ) );
 		subRateLimit[i] = new FloatModel( 0.f, 0.f, 1.f, 0.000001f, this, tr( "Rate Limit" ) );
 		subRateLimit[i]->setScaleLogarithmic( true );
+		subUnisonNum[i] = new FloatModel( 1.f, 1.f, 32.f, 1.f, this, tr( "Unison Voice Number" ) );
+		subUnisonDetune[i] = new FloatModel( 0.f, 0.f, 2000.f, 0.0001f, this, tr( "Unison Detune" ) );
 
 		modEnabled[i] = new BoolModel( false, this );
 
@@ -397,6 +399,8 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		connect( subPanning[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(72, i); }, Qt::DirectConnection );
 		connect( subTempo[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(76, i); }, Qt::DirectConnection );
 		connect( subRateLimit[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(82, i); }, Qt::DirectConnection );
+		connect( subUnisonNum[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(83, i); }, Qt::DirectConnection );
+		connect( subUnisonDetune[i], &FloatModel::dataChanged, this, [this, i]() { valueChanged(84, i); }, Qt::DirectConnection );
 		for( int j = 26; j <= 35; ++j )
 		{
 			valueChanged(j, i);
@@ -431,6 +435,8 @@ Microwave::Microwave( InstrumentTrack * _instrument_track ) :
 		valueChanged(77, i);
 		valueChanged(81, i);
 		valueChanged(82, i);
+		valueChanged(83, i);
+		valueChanged(84, i);
 
 		connect( modEnabled[i], &BoolModel::dataChanged, this, [this, i]() { modEnabledChanged(i); }, Qt::DirectConnection );
 	}
@@ -473,7 +479,7 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 {
 
 	// Save plugin version
-	_this.setAttribute( "version", "Microwave Testing Release 4" );
+	_this.setAttribute( "version", "Microwave Testing Release 4.1" );
 
 	/*
 
@@ -611,6 +617,8 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 			subPanning[i]->saveSettings( _doc, _this, "subPanning_"+QString::number(i) );
 			subTempo[i]->saveSettings( _doc, _this, "subTempo_"+QString::number(i) );
 			subRateLimit[i]->saveSettings( _doc, _this, "subRateLimit_"+QString::number(i) );
+			subUnisonNum[i]->saveSettings( _doc, _this, "subUnisonNum_"+QString::number(i) );
+			subUnisonDetune[i]->saveSettings( _doc, _this, "subUnisonDetune_"+QString::number(i) );
 		}
 	}
 
@@ -730,6 +738,8 @@ void Microwave::loadSettings( const QDomElement & _this )
 			subPanning[i]->loadSettings( _this, "subPanning_"+QString::number(i) );
 			subTempo[i]->loadSettings( _this, "subTempo_"+QString::number(i) );
 			subRateLimit[i]->loadSettings( _this, "subRateLimit_"+QString::number(i) );
+			subUnisonNum[i]->loadSettings( _this, "subUnisonNum_"+QString::number(i) );
+			subUnisonDetune[i]->loadSettings( _this, "subUnisonDetune_"+QString::number(i) );
 		}
 
 		modEnabled[i]->loadSettings( _this, "modEnabled_"+QString::number(i) );
@@ -883,6 +893,8 @@ void Microwave::valueChanged( int which, int num )
 		case 80: phaseRandArr[num] = phaseRand[num]->value(); break;
 		case 81: modType2Arr[num] = modType2[num]->value(); break;
 		case 82: subRateLimitArr[num] = subRateLimit[num]->value(); break;
+		case 83: subUnisonNumArr[num] = subUnisonNum[num]->value(); break;
+		case 84: subUnisonDetuneArr[num] = subUnisonDetune[num]->value(); break;
 	}
 
 	ConstNotePlayHandleList nphList = NotePlayHandle::nphsOfInstrumentTrack( microwaveTrack, true );
@@ -968,6 +980,8 @@ void Microwave::valueChanged( int which, int num )
 				case 80: ps->phaseRand[num] = phaseRand[num]->value(); break;
 				case 81: ps->modType2[num] = modType2[num]->value(); break;
 				case 82: ps->subRateLimit[num] = subRateLimit[num]->value(); break;
+				case 83: ps->subUnisonNum[num] = subUnisonNum[num]->value(); break;
+				case 84: ps->subUnisonDetune[num] = subUnisonDetune[num]->value(); break;
 			}
 		}
 	}
@@ -1188,7 +1202,7 @@ void Microwave::playNote( NotePlayHandle * _n, sampleFrame * _working_buffer )
 		_n->m_pluginData = new mSynth(
 					_n,
 				Engine::mixer()->processingSampleRate(),
-					phaseRandArr, modifyModeArr, modifyArr, morphArr, rangeArr, unisonVoicesArr, unisonDetuneArr, unisonMorphArr, unisonModifyArr, morphMaxArr, detuneArr, waveforms, subs, subEnabledArr, subVolArr, subRateLimitArr, subPhaseArr, subPhaseRandArr, subDetuneArr, subMutedArr, subKeytrackArr, subSampLenArr, subNoiseArr, sampLenArr, modInArr, modInNumArr, modInAmntArr, modInCurveArr, modIn2Arr, modInNum2Arr, modInAmnt2Arr, modInCurve2Arr, modOutSecArr, modOutSigArr, modOutSecNumArr, modCombineTypeArr, modTypeArr, modType2Arr, phaseArr, volArr, filtInVolArr, filtTypeArr, filtSlopeArr, filtCutoffArr, filtResoArr, filtGainArr, filtSatuArr, filtWetDryArr, filtBalArr, filtOutVolArr, filtEnabledArr, enabledArr, modEnabledArr, sampGraphs, mutedArr, sampleEnabledArr, sampleGraphEnabledArr, sampleMutedArr, sampleKeytrackingArr, sampleLoopArr, sampleVolumeArr, samplePanningArr, sampleDetuneArr, samplePhaseArr, samplePhaseRandArr, samples, filtFeedbackArr, filtDetuneArr, filtKeytrackingArr, subPanningArr, sampleStartArr, sampleEndArr, panArr, subTempoArr, macroArr, filtMutedArr );
+					phaseRandArr, modifyModeArr, modifyArr, morphArr, rangeArr, unisonVoicesArr, unisonDetuneArr, unisonMorphArr, unisonModifyArr, morphMaxArr, detuneArr, waveforms, subs, subEnabledArr, subVolArr, subRateLimitArr, subPhaseArr, subPhaseRandArr, subDetuneArr, subMutedArr, subKeytrackArr, subSampLenArr, subNoiseArr, sampLenArr, modInArr, modInNumArr, modInAmntArr, modInCurveArr, modIn2Arr, modInNum2Arr, modInAmnt2Arr, modInCurve2Arr, modOutSecArr, modOutSigArr, modOutSecNumArr, modCombineTypeArr, modTypeArr, modType2Arr, phaseArr, volArr, filtInVolArr, filtTypeArr, filtSlopeArr, filtCutoffArr, filtResoArr, filtGainArr, filtSatuArr, filtWetDryArr, filtBalArr, filtOutVolArr, filtEnabledArr, enabledArr, modEnabledArr, sampGraphs, mutedArr, sampleEnabledArr, sampleGraphEnabledArr, sampleMutedArr, sampleKeytrackingArr, sampleLoopArr, sampleVolumeArr, samplePanningArr, sampleDetuneArr, samplePhaseArr, samplePhaseRandArr, samples, filtFeedbackArr, filtDetuneArr, filtKeytrackingArr, subPanningArr, sampleStartArr, sampleEndArr, panArr, subTempoArr, macroArr, filtMutedArr, subUnisonNumArr, subUnisonDetuneArr );
 		mwc = dynamic_cast<Microwave *>(_n->instrumentTrack()->instrument());
 	}
 
@@ -1201,10 +1215,10 @@ void Microwave::playNote( NotePlayHandle * _n, sampleFrame * _working_buffer )
 		// Process some samples and ignore the output, depending on the oversampling value.  For example, if the oversampling is set to 4x, it will process 4 samples and output 1 of those.
 		for( int i = 0; i < oversample.value(); ++i )
 		{
-			ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1), mwc );
+			ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1), mwc, removeDC.value() );
 		}
 		//Get the actual synthesizer output
-		std::vector<float> sample = ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1), mwc );
+		std::vector<float> sample = ps->nextStringSample( waveforms, subs, sampGraphs, samples, maxFiltEnabled, maxModEnabled, maxSubEnabled, maxSampleEnabled, maxMainEnabled, Engine::mixer()->processingSampleRate() * (oversample.value()+1), mwc, removeDC.value() );
 
 		for( ch_cnt_t chnl = 0; chnl < DEFAULT_CHANNELS; ++chnl )
 		{
@@ -1502,6 +1516,14 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 	subRateLimitKnob->setHintText( tr( "Sub Oscillator Rate Limit" ), "" );
 	ToolTip::add( subRateLimitKnob, tr( "This knob limits the speed at which the waveform can change." ) );
 
+	subUnisonNumKnob = new Knob( knobSmallMicrowave, this );
+	subUnisonNumKnob->setHintText( tr( "Sub Oscillator Unison Voice Number" ), "" );
+	ToolTip::add( subUnisonNumKnob, tr( "This knob clones this oscillator multiple times depending on its value, and makes slight changes to the clones depending on the other unison-related knobs." ) );
+
+	subUnisonDetuneKnob = new Knob( knobSmallMicrowave, this );
+	subUnisonDetuneKnob->setHintText( tr( "Sub Oscillator Unison Detune" ), "" );
+	ToolTip::add( subUnisonDetuneKnob, tr( "This knob detunes every unison voice by a random number that is less than the specified amount." ) );
+
 	for( int i = 0; i < 8; ++i )
 	{
 		modOutSecBox[i] = new ComboBox( this );
@@ -1743,6 +1765,13 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 	ToolTip::add( manualBtn, tr( "Manual" ) );
 
 
+	removeDCBtn = new PixmapButton( this, tr( "Remove DC Offset" ) );
+	removeDCBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "remove_dc_offset_button_enabled" ) );
+	removeDCBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "remove_dc_offset_button_disabled" ) );
+	ToolTip::add( removeDCBtn, tr( "Remove DC Offset" ) );
+	removeDCBtn->setCheckable(true);
+
+
 	normalizeBtn = new PixmapButton( this, tr( "Normalize Wavetable" ) );
 	normalizeBtn->setActiveGraphic( PLUGIN_NAME::getIconPixmap( "normalize_button" ) );
 	normalizeBtn->setInactiveGraphic( PLUGIN_NAME::getIconPixmap( "normalize_button" ) );
@@ -1951,6 +1980,7 @@ void MicrowaveView::modelChanged()
 	wtLoad4Knob->setModel( &b->wtLoad4 );
 	mainFlipBtn->setModel( &b->mainFlipped );
 	subFlipBtn->setModel( &b->subFlipped );
+	removeDCBtn->setModel( &b->removeDC );
 }
 
 
@@ -2034,6 +2064,8 @@ void MicrowaveView::updateScroll()
 	subPanningKnob->move( 55 + 250 - scrollVal, 172 + subIsFlipped );
 	subTempoKnob->move( 35 + 250 - scrollVal, 172 + subIsNotFlipped );
 	subRateLimitKnob->move( 63 + 250 - scrollVal, 172 + subIsNotFlipped );
+	subUnisonNumKnob->move( 93 + 250 - scrollVal, 172 + subIsNotFlipped );
+	subUnisonDetuneKnob->move( 123 + 250 - scrollVal, 172 + subIsNotFlipped );
 
 	for( int i = 0; i < 8; ++i )
 	{
@@ -2159,6 +2191,8 @@ void MicrowaveView::updateScroll()
 
 	normalizeBtn->move( 175 + 1500 - scrollVal, 233 );
 	desawBtn->move( 115 + 1500 - scrollVal, 233 );
+
+	removeDCBtn->move( 1250 + 30 - scrollVal, 175 );
 }
 
 
@@ -2246,6 +2280,8 @@ void MicrowaveView::subNumChanged()
 	subPanningKnob->setModel( b->subPanning[subNumValue] );
 	subTempoKnob->setModel( b->subTempo[subNumValue] );
 	subRateLimitKnob->setModel( b->subRateLimit[subNumValue] );
+	subUnisonNumKnob->setModel( b->subUnisonNum[subNumValue] );
+	subUnisonDetuneKnob->setModel( b->subUnisonDetune[subNumValue] );
 }
 
 
@@ -3054,7 +3090,7 @@ void MicrowaveView::dragEnterEvent( QDragEnterEvent * _dee )
 
 
 // Initializes mSynth (when a new note is played).  Clone all of the arrays storing the knob values so they can be changed by modulation.
-mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float * _phaseRandArr, int * _modifyModeArr, float * _modifyArr, float * _morphArr, float * _rangeArr, float * _unisonVoicesArr, float * _unisonDetuneArr, float * _unisonMorphArr, float * _unisonModifyArr, float * _morphMaxArr, float * _detuneArr, float waveforms[8][524288], float * _subsArr, bool * _subEnabledArr, float * _subVolArr, float * _subRateLimitArr, float * _subPhaseArr, float * _subPhaseRandArr, float * _subDetuneArr, bool * _subMutedArr, bool * _subKeytrackArr, float * _subSampLenArr, bool * _subNoiseArr, int * _sampLenArr, int * _modInArr, int * _modInNumArr, float * _modInAmntArr, float * _modInCurveArr, int * _modIn2Arr, int * _modInNum2Arr, float * _modInAmnt2Arr, float * _modInCurve2Arr, int * _modOutSecArr, int * _modOutSigArr, int * _modOutSecNumArr, int * modCombineTypeArr, bool * modTypeArr, bool * modType2Arr, float * _phaseArr, float * _volArr, float * _filtInVolArr, int * _filtTypeArr, int * _filtSlopeArr, float * _filtCutoffArr, float * _filtResoArr, float * _filtGainArr, float * _filtSatuArr, float * _filtWetDryArr, float * _filtBalArr, float * _filtOutVolArr, bool * _filtEnabledArr, bool * _enabledArr, bool * _modEnabledArr, float * sampGraphs, bool * _mutedArr, bool * _sampleEnabledArr, bool * _sampleGraphEnabledArr, bool * _sampleMutedArr, bool * _sampleKeytrackingArr, bool * _sampleLoopArr, float * _sampleVolumeArr, float * _samplePanningArr, float * _sampleDetuneArr, float * _samplePhaseArr, float * _samplePhaseRandArr, std::vector<float> (&samples)[8][2], float * _filtFeedbackArr, float * _filtDetuneArr, bool * _filtKeytrackingArr, float * _subPanningArr, float * _sampleStartArr, float * _sampleEndArr, float * _panArr, float * _subTempoArr, float * _macroArr, bool * _filtMutedArr ) :
+mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float * _phaseRandArr, int * _modifyModeArr, float * _modifyArr, float * _morphArr, float * _rangeArr, float * _unisonVoicesArr, float * _unisonDetuneArr, float * _unisonMorphArr, float * _unisonModifyArr, float * _morphMaxArr, float * _detuneArr, float waveforms[8][524288], float * _subsArr, bool * _subEnabledArr, float * _subVolArr, float * _subRateLimitArr, float * _subPhaseArr, float * _subPhaseRandArr, float * _subDetuneArr, bool * _subMutedArr, bool * _subKeytrackArr, float * _subSampLenArr, bool * _subNoiseArr, float * _sampLenArr, int * _modInArr, int * _modInNumArr, float * _modInAmntArr, float * _modInCurveArr, int * _modIn2Arr, int * _modInNum2Arr, float * _modInAmnt2Arr, float * _modInCurve2Arr, int * _modOutSecArr, int * _modOutSigArr, int * _modOutSecNumArr, int * modCombineTypeArr, bool * modTypeArr, bool * modType2Arr, float * _phaseArr, float * _volArr, float * _filtInVolArr, int * _filtTypeArr, int * _filtSlopeArr, float * _filtCutoffArr, float * _filtResoArr, float * _filtGainArr, float * _filtSatuArr, float * _filtWetDryArr, float * _filtBalArr, float * _filtOutVolArr, bool * _filtEnabledArr, bool * _enabledArr, bool * _modEnabledArr, float * sampGraphs, bool * _mutedArr, bool * _sampleEnabledArr, bool * _sampleGraphEnabledArr, bool * _sampleMutedArr, bool * _sampleKeytrackingArr, bool * _sampleLoopArr, float * _sampleVolumeArr, float * _samplePanningArr, float * _sampleDetuneArr, float * _samplePhaseArr, float * _samplePhaseRandArr, std::vector<float> (&samples)[8][2], float * _filtFeedbackArr, float * _filtDetuneArr, bool * _filtKeytrackingArr, float * _subPanningArr, float * _sampleStartArr, float * _sampleEndArr, float * _panArr, float * _subTempoArr, float * _macroArr, bool * _filtMutedArr, float * _subUnisonNumArr, float * _subUnisonDetuneArr ) :
 	nph( _nph ),
 	sample_rate( _sample_rate )
 {
@@ -3068,7 +3104,6 @@ mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float *
 	memcpy( unisonModify, _unisonModifyArr, sizeof(float) * 8 );
 	memcpy( morphMaxVal, _morphMaxArr, sizeof(float) * 8 );
 	memcpy( detuneVal, _detuneArr, sizeof(float) * 8 );
-	memcpy( sampLen, _sampLenArr, sizeof(int) * 8 );
 	memcpy( modIn, _modInArr, sizeof(int) * 64 );
 	memcpy( modInNum, _modInNumArr, sizeof(int) * 64 );
 	memcpy( modInAmnt, _modInAmntArr, sizeof(float) * 64 );
@@ -3129,27 +3164,30 @@ mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float *
 	memcpy( filtMuted, _filtMutedArr, sizeof(bool) * 8 );
 	memcpy( phaseRand, _phaseRandArr, sizeof(int) * 8 );
 	memcpy( subRateLimit, _subRateLimitArr, sizeof(float) * 64 );
-
-	memcpy( sampLen, _sampLenArr, sizeof(int) * 8 );
-
+	memcpy( subUnisonNum, _subUnisonNumArr, sizeof(float) * 64 );
+	memcpy( subUnisonDetune, _subUnisonDetuneArr, sizeof(float) * 64 );
+	memcpy( sampLen, _sampLenArr, sizeof(float) * 8 );
 	memcpy( macro, _macroArr, sizeof(float) * 8 );
 
-	for( int i=0; i < 8; ++i )
+	for( int i = 0; i < 8; ++i )
 	{
-		for( int j=0; j < 32; ++j )
+		for( int j = 0; j < 32; ++j )
 		{
 			// Randomize the phases of all of the waveforms
-			sample_realindex[i][j] = int( ( ( fastRandf( sampLen[i] ) - ( sampLen[i] * 0.5f ) ) * ( phaseRand[i] * 0.01f ) ) + ( sampLen[i] * 0.5f ) ) % ( sampLen[i] );
+			sample_realindex[i][j] = int( ( ( fastRandf( sampLen[i] ) - ( sampLen[i] * 0.5f ) ) * ( phaseRand[i] * 0.01f ) ) + ( sampLen[i] * 0.5f ) ) % int( sampLen[i] );
 		}
 	}
 
-	for( int i=0; i < 64; ++i )
+	for( int i = 0; i < 64; ++i )
 	{
-		sample_subindex[i] = 0;
-		subNoiseDirection[i] = 1;
+		for( int l = 0; l < 32; ++l )
+		{
+			sample_subindex[i][l] = int( ( ( fastRandf( subSampLen[i] ) - ( subSampLen[i] * 0.5f ) ) * ( subPhaseRand[i] * 0.01f ) ) + ( subSampLen[i] * 0.5f ) ) % int( subSampLen[i] );
+			subNoiseDirection[i][l] = 1;
+		}
 	}
 
-	for( int i=0; i < 8; ++i )
+	for( int i = 0; i < 8; ++i )
 	{
 		sample_sampleindex[i] = fmod( fastRandf( samples[i][0].size() ) * ( samplePhaseRand[i] * 0.01f ), ( samples[i][0].size() *sampleEnd[i] ) - ( samples[i][0].size() * sampleStart[i] ) ) + ( samples[i][0].size() * sampleStart[i] );
 		humanizer[i] = ( rand() / float(RAND_MAX) ) * 2 - 1;// Generate humanizer values at the beginning of every note
@@ -3157,11 +3195,19 @@ mSynth::mSynth( NotePlayHandle * _nph, const sample_rate_t _sample_rate, float *
 
 	noteDuration = -1;
 
-	for( int i=0; i < 8; ++i )
+	for( int i = 0; i < 8; ++i )
 	{
-		for( int j=0; j < unisonVoices[i]; ++j )
+		for( int j = 0; j < unisonVoices[i]; ++j )
 		{
 			unisonDetuneAmounts[i][j] = ((rand()/float(RAND_MAX))*2.f)-1;
+		}
+	}
+
+	for( int i = 0; i < 64; ++i )
+	{
+		for( int j = 0; j < subUnisonNum[i]; ++j )
+		{
+			subUnisonDetuneAmounts[i][j] = ((rand()/float(RAND_MAX))*2.f)-1;
 		}
 	}
 
@@ -3175,7 +3221,7 @@ mSynth::~mSynth()
 
 // The heart of Microwave.  As you probably learned in anatomy class, hearts actually aren't too pretty.  This is no exception.
 // This is the part that puts everything together and calculates an audio output.
-std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate, Microwave * mwc )
+std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], float * subs, float * sampGraphs, std::vector<float> (&samples)[8][2], int maxFiltEnabled, int maxModEnabled, int maxSubEnabled, int maxSampleEnabled, int maxMainEnabled, int sample_rate, Microwave * mwc, bool removeDC )
 {
 
 	++noteDuration;
@@ -3623,6 +3669,20 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 						{
 							subRateLimit[modOutSecNum[l]-1] = qMax( 0.f, subRateLimit[modOutSecNum[l]-1] + comboModValMono * 2.f );
 							modValType.push_back( 82 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 7:// Send input to Unison Voice Number
+						{
+							subUnisonNum[modOutSecNum[l]-1] = qMax( 0.f, subUnisonNum[modOutSecNum[l]-1] + comboModValMono * 2.f );
+							modValType.push_back( 83 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 8:// Send input to Unison Detune
+						{
+							subUnisonDetune[modOutSecNum[l]-1] = qMax( 0.f, subUnisonDetune[modOutSecNum[l]-1] + comboModValMono * 2.f );
+							modValType.push_back( 84 );
 							modValNum.push_back( modOutSecNum[l]-1 );
 							break;
 						}
@@ -4341,7 +4401,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				lastMainOscEnvDone[l] = true;
 			}
 
-			sample[i][l] = sample[i][l] * vol[i] * 0.01f;
+			sample[i][l] *= vol[i] * 0.01f;
 		}
 	}
 
@@ -4349,144 +4409,125 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 	//== SUB OSCILLATOR ==//
 	//====================//
 
-	sample_t subsample[64][2] = {{0}};
-	for( int l = 0; l < maxSubEnabled; ++l )// maxSubEnabled keeps this from looping 64 times every sample, saving a lot of CPU
+	sample_t subsample[64][32] = {{0}};
+	for( int i = 0; i < maxSubEnabled; ++i )// maxSubEnabled keeps this from looping 64 times every sample, saving a lot of CPU
 	{
-		if( subEnabled[l] )
+		for( int l = 0; l < subUnisonNum[i]; ++l )
 		{
-			if( !subNoise[l] )
+			if( subEnabled[i] )
 			{
-				if( subTempo[l] )
+				if( !subNoise[i] )
 				{
-					noteFreq = subKeytrack[l] ? detuneWithCents( nph->frequency(), subDetune[l] ) * ( subTempo[l] / 26400.f ) : detuneWithCents( 440.f, subDetune[l] ) * ( subTempo[l] / 26400.f );
+					subUnisonVoicesMinusOne = subUnisonNum[i] - 1;// subUnisonNum[i] - 1 is needed many times, which is why subUnisonVoicesMinusOne exists
+
+					if( !subUnisonVoicesMinusOne )
+					{
+						if( subTempo[i] )
+						{
+							noteFreq = subKeytrack[i] ? detuneWithCents( nph->frequency(), subDetune[i] ) * ( subTempo[i] / 26400.f ) : detuneWithCents( 440.f, subDetune[i] ) * ( subTempo[i] / 26400.f );
+						}
+						else
+						{
+							noteFreq = subKeytrack[i] ? detuneWithCents( nph->frequency(), subDetune[i] ) : detuneWithCents( 440.f, subDetune[i] );
+						}
+					}
+					else
+					{
+						if( subTempo[i] )
+						{
+							noteFreq = subKeytrack[i] ? detuneWithCents( nph->frequency(), subUnisonDetuneAmounts[i][l]*subUnisonDetune[i]+subDetune[i] ) * ( subTempo[i] / 26400.f ) : detuneWithCents( 440.f, subUnisonDetuneAmounts[i][l]*subUnisonDetune[i]+subDetune[i] ) * ( subTempo[i] / 26400.f );
+						}
+						else
+						{
+							noteFreq = subKeytrack[i] ? detuneWithCents( nph->frequency(), subUnisonDetuneAmounts[i][l]*subUnisonDetune[i]+subDetune[i] ) : detuneWithCents( 440.f, subUnisonDetuneAmounts[i][l]*subUnisonDetune[i]+subDetune[i] );
+						}
+					}
+
+					sample_step_sub = subSampLen[i] / ( sample_rate / noteFreq );
+
+					subsample[i][l] = ( subVol[i] * 0.01f ) * subs[int( sample_subindex[i][l] + ( subPhase[i] * subSampLen[i] ) ) % int(subSampLen[i]) + ( 2048 * i )];
+
+					sample_subindex[i][l] += sample_step_sub;
+
+					// move waveform position back if it passed the end of the waveform
+					while ( sample_subindex[i][l] >= subSampLen[i] )
+					{
+						sample_subindex[i][l] -= subSampLen[i];
+						lastSubEnvDone[i] = true;
+					}
+
+					/* That is all that is needed for the sub oscillator calculations.
+
+					(To the tune of Hallelujah)
+
+						There was a Happy CPU
+					No processing power to chew through
+					In this wonderful synthesis brew
+						Hallelujah
+
+						But with some wavetable synthesis
+					Your CPU just blows a kiss
+					And leaves you there despite your miss
+						Hallelujah
+
+					Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
+
+						Your music ambition lays there, dead
+					Can't get your ideas out of your head
+					Because your computer's slower than lead
+						Hallelujah
+
+						Sometimes you may try and try
+					To keep your ping from saying goodbye
+					Leaving you to die and cry
+						Hallelujah
+
+					Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
+
+						But what is this, an alternative?
+					Sub oscillators supported native
+					To prevent CPU obliteratives
+						Hallelujah
+
+						Your music has come back to life
+					CPU problems cut off like a knife
+					Sub oscillators removing your strife
+						Hallelujah
+
+					Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
+
+					*cool outro*
+
+
+					*/
 				}
-				else
+				else// sub oscillator is noise
 				{
-					noteFreq = subKeytrack[l] ? detuneWithCents( nph->frequency(), subDetune[l] ) : detuneWithCents( 440.f, subDetune[l] );
+					noiseSampRand = fastRandf( subSampLen[i] ) - 1;
+
+					temp1 = ( subs[int(noiseSampRand)] * subNoiseDirection[i][l] ) + lastSubVal[i][0];
+					if( temp1 > 1 || temp1 < -1 )
+					{
+						subNoiseDirection[i][l] *= -1;
+						temp1 = ( subs[int(noiseSampRand)] * subNoiseDirection[i][l] ) + lastSubVal[i][0];
+					}
+
+					subsample[i][l] = temp1 * ( subVol[i] * 0.01f );// Division by 1.2f to tame DC offset
 				}
-				sample_step_sub = subSampLen[l] / ( sample_rate / noteFreq );
 
-				subsample[l][0] = ( subVol[l] * 0.01f ) * subs[int( sample_subindex[l] + ( subPhase[l] * subSampLen[l] ) ) % int(subSampLen[l]) + ( 2048 * l )];
-				subsample[l][1] = subsample[l][0];
-
-				if( subPanning[l] < 0 )
+				// Mutes sub after saving value for modulation if the muted option is on
+				if( subMuted[i] )
 				{
-					subsample[l][1] *= ( 100.f + subPanning[l] ) * 0.01f;
+					subsample[i][l] = 0;
 				}
-				else if( subPanning[l] > 0 )
-				{
-					subsample[l][0] *= ( 100.f - subPanning[l] ) * 0.01f;
-				}
-
-				if( subRateLimit[l] )
-				{
-					subsample[l][0] = lastSubVal[l][0] + qBound( -subRateLimit[l], subsample[l][0] - lastSubVal[l][0], subRateLimit[l] );
-					subsample[l][1] = lastSubVal[l][1] + qBound( -subRateLimit[l], subsample[l][1] - lastSubVal[l][1], subRateLimit[l] );
-				}
-
-				lastSubVal[l][0] = subsample[l][0];// Store value for matrix
-				lastSubVal[l][1] = subsample[l][1];
-
-				if( !lastSubEnvDone[l] )
-				{
-					lastSubEnvVal[l][0] = subsample[l][0];// Store envelope value for matrix
-					lastSubEnvVal[l][1] = subsample[l][1];
-				}
-
-				sample_subindex[l] += sample_step_sub;
-
-				// move waveform position back if it passed the end of the waveform
-				while ( sample_subindex[l] >= subSampLen[l] )
-				{
-					sample_subindex[l] -= subSampLen[l];
-					lastSubEnvDone[l] = true;
-				}
-
-				/* That is all that is needed for the sub oscillator calculations.
-
-				(To the tune of Hallelujah)
-
-					There was a Happy CPU
-				No processing power to chew through
-				In this wonderful synthesis brew
-					Hallelujah
-
-					But with some wavetable synthesis
-				Your CPU just blows a kiss
-				And leaves you there despite your miss
-					Hallelujah
-
-				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
-
-					Your music ambition lays there, dead
-				Can't get your ideas out of your head
-				Because your computer's slower than lead
-					Hallelujah
-
-					Sometimes you may try and try
-				To keep your ping from saying goodbye
-				Leaving you to die and cry
-					Hallelujah
-
-				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
-
-					But what is this, an alternative?
-				Sub oscillators supported native
-				To prevent CPU obliteratives
-					Hallelujah
-
-					Your music has come back to life
-				CPU problems cut off like a knife
-				Sub oscillators removing your strife
-					Hallelujah
-
-				Hallelujah, Hallelujah, Hallelujah, Halleluuu-uuuuuuuu-uuuujah
-
-				*cool outro*
-
-
-				*/
 			}
-			else// sub oscillator is noise
+			else
 			{
-				noiseSampRand = fastRandf( subSampLen[l] ) - 1;
-
-				temp1 = ( subs[int(noiseSampRand)] * subNoiseDirection[l] ) + lastSubVal[l][0];
-				if( temp1 > 1 || temp1 < -1 )
-				{
-					subNoiseDirection[l] *= -1;
-					temp1 = ( subs[int(noiseSampRand)] * subNoiseDirection[l] ) + lastSubVal[l][0];
-				}
-
-				subsample[l][0] = temp1 * ( subVol[l] * 0.01f );// Division by 1.2f to tame DC offset
-				subsample[l][1] = subsample[l][0];
-
-				if( subRateLimit[l] )
-				{
-					subsample[l][0] = lastSubVal[l][0] + qBound( -subRateLimit[l], subsample[l][0] - lastSubVal[l][0], subRateLimit[l] );
-					subsample[l][1] = lastSubVal[l][1] + qBound( -subRateLimit[l], subsample[l][1] - lastSubVal[l][1], subRateLimit[l] );
-				}
-
-				lastSubVal[l][0] = subsample[l][0];
-				lastSubVal[l][1] = subsample[l][1];
-
-				lastSubEnvVal[l][0] = subsample[l][0];// Store envelope value for matrix
-				lastSubEnvVal[l][1] = subsample[l][1];
+				lastSubVal[i][0] = 0;
+				lastSubVal[i][1] = 0;
+				lastSubEnvVal[i][0] = 0;
+				lastSubEnvVal[i][1] = 0;
 			}
-
-			// Mutes sub after saving value for modulation if the muted option is on
-			if( subMuted[l] )
-			{
-				subsample[l][0] = 0;
-				subsample[l][1] = 0;
-			}
-		}
-		else
-		{
-			lastSubVal[l][0] = 0;
-			lastSubVal[l][1] = 0;
-			lastSubEnvVal[l][0] = 0;
-			lastSubEnvVal[l][1] = 0;
 		}
 	}
 
@@ -4594,6 +4635,8 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 		{
 			if( unisonVoices[i] > 1 )
 			{
+				unisonVoicesMinusOne = unisonVoices[i] - 1;
+
 				sampleMainOsc[0] = 0;
 				sampleMainOsc[1] = 0;
 				for( int j = 0; j < unisonVoices[i]; ++j )
@@ -4606,45 +4649,27 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				temp1 = unisonVoices[i] * 0.5f;
 				sampleMainOsc[0] /= temp1;
 				sampleMainOsc[1] /= temp1;
-
-				if( pan[i] )
-				{
-					if( pan[i] < 0 )
-					{
-						sampleMainOsc[1] *= ( 100.f + pan[i] ) * 0.01f;
-					}
-					else
-					{
-						sampleMainOsc[0] *= ( 100.f - pan[i] ) * 0.01f;
-					}
-				}
-
-				sampleAvg[0] += sampleMainOsc[0];
-				sampleAvg[1] += sampleMainOsc[1];
 			}
 			else
 			{
 				sampleMainOsc[0] = sample[i][0];
 				sampleMainOsc[1] = sample[i][0];
-
-				if( pan[i] )
-				{
-					if( pan[i] < 0 )
-					{
-						sampleMainOsc[1] *= ( 100.f + pan[i] ) * 0.01f;
-					}
-					else
-					{
-						sampleMainOsc[0] *= ( 100.f - pan[i] ) * 0.01f;
-					}
-				}
-
-				sampleAvg[0] += sampleMainOsc[0];
-				sampleAvg[1] += sampleMainOsc[1];
 			}
 
-			lastMainOscVal[i][0] = sampleAvg[0];// Store results for modulations
-			lastMainOscVal[i][1] = sampleAvg[1];
+			if( pan[i] )
+			{
+				if( pan[i] < 0 )
+				{
+					sampleMainOsc[1] *= ( 100.f + pan[i] ) * 0.01f;
+				}
+				else
+				{
+					sampleMainOsc[0] *= ( 100.f - pan[i] ) * 0.01f;
+				}
+			}
+
+			lastMainOscVal[i][0] = sampleMainOsc[0];// Store results for modulations
+			lastMainOscVal[i][1] = sampleMainOsc[1];
 
 			if( !lastMainOscEnvDone[i] )
 			{
@@ -4652,21 +4677,75 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				lastMainOscEnvVal[i][1] = lastMainOscVal[i][1];
 			}
 
-			if( muted[i] )
+			if( !muted[i] )
 			{
-				sampleAvg[0] = 0;
-				sampleAvg[1] = 0;
+				sampleAvg[0] += sampleMainOsc[0];
+				sampleAvg[1] += sampleMainOsc[1];
 			}
 		}
 	}
 
+	std::vector<float> sampleSubOsc(2);
 	// Sub Oscillator outputs
-	for( int l = 0; l < maxSubEnabled; ++l )// maxSubEnabled keeps this from looping 64 times every sample, saving a lot of CPU
+	for( int i = 0; i < maxSubEnabled; ++i )
 	{
-		if( subEnabled[l] )
+		if( subEnabled[i] )
 		{
-			sampleAvg[0] += subsample[l][0];
-			sampleAvg[1] += subsample[l][1];
+			if( subUnisonNum[i] > 1 )
+			{
+				subUnisonVoicesMinusOne = subUnisonNum[i] - 1;
+
+				sampleSubOsc[0] = 0;
+				sampleSubOsc[1] = 0;
+				for( int j = 0; j < subUnisonNum[i]; ++j )
+				{
+					// Pan unison voices
+					sampleSubOsc[0] += subsample[i][j] * ((subUnisonVoicesMinusOne-j)/subUnisonVoicesMinusOne);
+					sampleSubOsc[1] += subsample[i][j] * (j/subUnisonVoicesMinusOne);
+				}
+				// Decrease volume so more unison voices won't increase volume too much
+				temp1 = subUnisonNum[i] * 0.5f;
+				sampleSubOsc[0] /= temp1;
+				sampleSubOsc[1] /= temp1;
+			}
+			else
+			{
+				sampleSubOsc[0] = subsample[i][0];
+				sampleSubOsc[1] = subsample[i][0];
+			}
+
+			if( subPanning[i] )
+			{
+				if( subPanning[i] < 0 )
+				{
+					sampleSubOsc[1] *= ( 100.f + subPanning[i] ) * 0.01f;
+				}
+				else
+				{
+					sampleSubOsc[0] *= ( 100.f - subPanning[i] ) * 0.01f;
+				}
+			}
+
+			if( subRateLimit[i] )
+			{
+				sampleSubOsc[0] = lastSubVal[i][0] + qBound( -subRateLimit[i], sampleSubOsc[0] - lastSubVal[i][0], subRateLimit[i] );
+				sampleSubOsc[1] = lastSubVal[i][1] + qBound( -subRateLimit[i], sampleSubOsc[1] - lastSubVal[i][1], subRateLimit[i] );
+			}
+
+			lastMainOscVal[i][0] = sampleSubOsc[0];// Store results for modulations
+			lastMainOscVal[i][1] = sampleSubOsc[1];
+
+			if( !lastSubEnvDone[i] )
+			{
+				lastSubEnvVal[i][0] = lastSubVal[i][0];
+				lastSubEnvVal[i][1] = lastSubVal[i][1];
+			}
+
+			if( !subMuted[i] )
+			{
+				sampleAvg[0] += sampleSubOsc[0];
+				sampleAvg[1] += sampleSubOsc[1];
+			}
 		}
 	}
 
@@ -4697,6 +4776,15 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 	}
 	modValType.clear();
 	modValNum.clear();
+
+	if( removeDC )
+	{
+		averageSampleValue[0] = ( averageSampleValue[0] * 0.999f ) + ( sampleAvg[0] * 0.001f );
+		averageSampleValue[1] = ( averageSampleValue[1] * 0.999f ) + ( sampleAvg[1] * 0.001f );
+
+		sampleAvg[0] -= averageSampleValue[0];
+		sampleAvg[1] -= averageSampleValue[1];
+	}
 
 	return sampleAvg;
 }
@@ -4793,6 +4881,8 @@ void mSynth::refreshValue( int which, int num, Microwave * mwc )
 		case 80: phaseRand[num] = mwc->phaseRand[num]->value(); break;
 		case 81: modType2[num] = mwc->modType2[num]->value(); break;
 		case 82: subRateLimit[num] = mwc->subRateLimit[num]->value(); break;
+		case 83: subUnisonNum[num] = mwc->subUnisonNum[num]->value(); break;
+		case 84: subUnisonDetune[num] = mwc->subUnisonDetune[num]->value(); break;
 	}
 }
 
