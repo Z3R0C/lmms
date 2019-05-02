@@ -479,7 +479,7 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 {
 
 	// Save plugin version
-	_this.setAttribute( "version", "Microwave Testing Release 4.1" );
+	_this.setAttribute( "version", "Microwave Testing Release 4.2" );
 
 	/*
 
@@ -487,6 +487,8 @@ void Microwave::saveSettings( QDomDocument & _doc, QDomElement & _this )
 
 	- 0.9: Every version before Microwave Testing Release 4 was mistakenly listed as 0.9.
 	- Microwave Testing Release 4
+	- Microwave Testing Release 4.1
+	- Microwave Testing Release 4.2
 
 	*/
 
@@ -1912,8 +1914,6 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 	connect( &b->scroll, SIGNAL( dataChanged( ) ), this, SLOT( updateScroll( ) ) );
 
-	connect( scrollKnob, SIGNAL( sliderReleased( ) ), this, SLOT( scrollReleased( ) ) );
-
 	connect( &b->mainNum, SIGNAL( dataChanged( ) ), this, SLOT( mainNumChanged( ) ) );
 
 	connect( &b->subNum, SIGNAL( dataChanged( ) ), this, SLOT( subNumChanged( ) ) );
@@ -1922,15 +1922,19 @@ MicrowaveView::MicrowaveView( Instrument * _instrument,
 
 	connect( manualBtn, SIGNAL (clicked ( bool ) ), this, SLOT ( manualBtnClicked() ) );
 
-	for( int i = 0; i < 8; ++i )
+	for( int i = 0; i < 64; ++i )
 	{
 		connect( b->modOutSec[i], &ComboBoxModel::dataChanged, this, [this, i]() { modOutSecChanged(i); }, Qt::DirectConnection );
 		connect( b->modIn[i], &ComboBoxModel::dataChanged, this, [this, i]() { modInChanged(i); }, Qt::DirectConnection );
-
-		connect( modUpArrow[i], &PixmapButton::clicked, this, [this, i]() { modUpClicked(i); } );
-		connect( modDownArrow[i], &PixmapButton::clicked, this, [this, i]() { modDownClicked(i); } );
+		connect( b->modIn2[i], &ComboBoxModel::dataChanged, this, [this, i]() { modIn2Changed(i); }, Qt::DirectConnection );
 
 		connect( b->modEnabled[i], &BoolModel::dataChanged, this, [this, i]() { modEnabledChanged(); } );
+	}
+
+	for( int i = 0; i < 8; ++i )
+	{
+		connect( modUpArrow[i], &PixmapButton::clicked, this, [this, i]() { modUpClicked(i); } );
+		connect( modDownArrow[i], &PixmapButton::clicked, this, [this, i]() { modDownClicked(i); } );
 	}
 
 	updateScroll();
@@ -2196,16 +2200,6 @@ void MicrowaveView::updateScroll()
 }
 
 
-// Snaps scroll to nearest tab when the scroll knob is released.
-void MicrowaveView::scrollReleased()
-{
-	Microwave * b = castModel<Microwave>();
-
-	const float scrollVal = b->scroll.value();
-	b->scroll.setValue( round(scrollVal-0.25) );
-}
-
-
 
 void MicrowaveView::wheelEvent( QWheelEvent * _me )
 {
@@ -2461,6 +2455,74 @@ void MicrowaveView::modInChanged( int i )
 			{
 				modInNumBox[i-matrixDivide]->show();
 				b->modInNum[i]->setRange( 1, 8, 1 );
+				break;
+			}
+		}
+	}
+}
+
+
+// Moves/changes the GUI around depending on the Mod In Section value
+void MicrowaveView::modIn2Changed( int i )
+{
+	Microwave * b = castModel<Microwave>();
+
+	int modScrollVal = ( matrixScrollBar->value() ) / 100.f * 115.f;
+	int matrixDivide = modScrollVal / 460 * 4;
+
+	if( i-matrixDivide < 8 && i-matrixDivide >= 0 )
+	{
+		switch( b->modIn2[i]->value() )
+		{
+			case 0:
+			{
+				modInNumBox2[i-matrixDivide]->hide();
+				break;
+			}
+			case 1:// Main OSC
+			{
+				modInNumBox2[i-matrixDivide]->show();
+				b->modInNum2[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 2:// Sub OSC
+			{
+				modInNumBox2[i-matrixDivide]->show();
+				b->modInNum2[i]->setRange( 1, 64, 1 );
+				break;
+			}
+			case 3:// Sample OSC
+			{
+				modInNumBox2[i-matrixDivide]->show();
+				b->modInNum2[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 4:// Filter
+			{
+				modInNumBox2[i-matrixDivide]->show();
+				b->modInNum2[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 5:// Velocity
+			{
+				modInNumBox2[i-matrixDivide]->hide();
+				break;
+			}
+			case 6:// Panning
+			{
+				modInNumBox2[i-matrixDivide]->hide();
+				break;
+			}
+			case 7:// Humanizer
+			{
+				modInNumBox2[i-matrixDivide]->show();
+				b->modInNum2[i]->setRange( 1, 8, 1 );
+				break;
+			}
+			case 8:// Macro
+			{
+				modInNumBox2[i-matrixDivide]->show();
+				b->modInNum2[i]->setRange( 1, 8, 1 );
 				break;
 			}
 		}
@@ -3449,8 +3511,8 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				if( modInCurve[l] != 100.f )// The "if" statement is there so unnecessary CPU isn't spent (pow is very expensive) if the curve knob isn't being used.
 				{
 					// Move to a scale of 0 to 1 (from -1 to 1) and then apply the curve.
-					curModValCurve[0] = (curModVal[0] <= -1) ? ( curModVal[0] + 1 ) * 0.5f : pow( ( curModVal[0] + 1 ) * 0.5f, 1.f / ( modInCurve[l] * 0.01f ) );
-					curModValCurve[1] = (curModVal[1] <= -1) ? ( curModVal[1] + 1 ) * 0.5f : pow( ( curModVal[1] + 1 ) * 0.5f, 1.f / ( modInCurve[l] * 0.01f ) );
+					curModValCurve[0] = (curModVal[0] <= -1 || curModVal[0] >= 1) ? ( curModVal[0] + 1 ) * 0.5f : pow( ( curModVal[0] + 1 ) * 0.5f, 1.f / ( modInCurve[l] * 0.01f ) );
+					curModValCurve[1] = (curModVal[1] <= -1 || curModVal[1] >= 1) ? ( curModVal[1] + 1 ) * 0.5f : pow( ( curModVal[1] + 1 ) * 0.5f, 1.f / ( modInCurve[l] * 0.01f ) );
 				}
 				else
 				{
@@ -3459,8 +3521,8 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				}
 				if( modInCurve2[l] != 100.f )
 				{
-					curModVal2Curve[0] = (curModVal2[0] <= -1) ? ( curModVal2[0] + 1 ) * 0.5f : pow( ( curModVal2[0] + 1 ) * 0.5f, 1.f / ( modInCurve2[l] * 0.01f ) );
-					curModVal2Curve[1] = (curModVal2[1] <= -1) ? ( curModVal2[1] + 1 ) * 0.5f : pow( ( curModVal2[1] + 1 ) * 0.5f, 1.f / ( modInCurve2[l] * 0.01f ) );
+					curModVal2Curve[0] = (curModVal2[0] <= -1 || curModVal2[0] >= 1) ? ( curModVal2[0] + 1 ) * 0.5f : pow( ( curModVal2[0] + 1 ) * 0.5f, 1.f / ( modInCurve2[l] * 0.01f ) );
+					curModVal2Curve[1] = (curModVal2[1] <= -1 || curModVal2[1] >= 1) ? ( curModVal2[1] + 1 ) * 0.5f : pow( ( curModVal2[1] + 1 ) * 0.5f, 1.f / ( modInCurve2[l] * 0.01f ) );
 				}
 				else
 				{
@@ -3472,8 +3534,8 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 			{
 				if( modInCurve[l] != 100.f )
 				{
-					curModValCurve[0] = ( (curModVal[0] <= -1) ? curModVal[0] : pow( abs( curModVal[0] ), 1.f / ( modInCurve[l] * 0.01f ) ) * ( curModVal[0] < 0 ? -1 : 1 ) ) + (modInAmnt[l] / 100.f);
-					curModValCurve[1] = ( (curModVal[1] <= -1) ? curModVal[1] : pow( abs( curModVal[1] ), 1.f / ( modInCurve[l] * 0.01f ) ) * ( curModVal[1] < 0 ? -1 : 1 ) ) + (modInAmnt[l] / 100.f);
+					curModValCurve[0] = ( (curModVal[0] <= -1 || curModVal[0] >= 1) ? curModVal[0] : pow( abs( curModVal[0] ), 1.f / ( modInCurve[l] * 0.01f ) ) * ( curModVal[0] < 0 ? -1 : 1 ) ) + (modInAmnt[l] / 100.f);
+					curModValCurve[1] = ( (curModVal[1] <= -1 || curModVal[1] >= 1) ? curModVal[1] : pow( abs( curModVal[1] ), 1.f / ( modInCurve[l] * 0.01f ) ) * ( curModVal[1] < 0 ? -1 : 1 ) ) + (modInAmnt[l] / 100.f);
 				}
 				else
 				{
@@ -3482,8 +3544,8 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				}
 				if( modInCurve2[l] != 100.f )
 				{
-					curModVal2Curve[0] = ( (curModVal2[0] <= -1) ? curModVal2[0] : pow( abs( curModVal2[0] ), 1.f / ( modInCurve2[l] * 0.01f ) ) * ( curModVal2[0] < 0 ? -1 : 1 ) ) + (modInAmnt2[l] / 100.f);
-					curModVal2Curve[1] = ( (curModVal2[1] <= -1) ? curModVal2[1] : pow( abs( curModVal2[0] ), 1.f / ( modInCurve2[l] * 0.01f ) ) * ( curModVal2[0] < 0 ? -1 : 1 ) ) + (modInAmnt2[l] / 100.f);
+					curModVal2Curve[0] = ( (curModVal2[0] <= -1 || curModVal2[0] >= 1) ? curModVal2[0] : pow( abs( curModVal2[0] ), 1.f / ( modInCurve2[l] * 0.01f ) ) * ( curModVal2[0] < 0 ? -1 : 1 ) ) + (modInAmnt2[l] / 100.f);
+					curModVal2Curve[1] = ( (curModVal2[1] <= -1 || curModVal2[1] >= 1) ? curModVal2[1] : pow( abs( curModVal2[0] ), 1.f / ( modInCurve2[l] * 0.01f ) ) * ( curModVal2[0] < 0 ? -1 : 1 ) ) + (modInAmnt2[l] / 100.f);
 				}
 				else
 				{
@@ -3660,7 +3722,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 						}
 						case 5:// Send input to Sample Length
 						{
-							subSampLen[modOutSecNum[l]-1] = qMax( 0, int( subSampLen[modOutSecNum[l]-1] + comboModValMono * 2048.f ) );
+							subSampLen[modOutSecNum[l]-1] = qMax( 1, int( subSampLen[modOutSecNum[l]-1] + comboModValMono * 2048.f ) );
 							modValType.push_back( 33 );
 							modValNum.push_back( modOutSecNum[l]-1 );
 							break;
@@ -3674,14 +3736,14 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 						}
 						case 7:// Send input to Unison Voice Number
 						{
-							subUnisonNum[modOutSecNum[l]-1] = qMax( 0.f, subUnisonNum[modOutSecNum[l]-1] + comboModValMono * 2.f );
+							subUnisonNum[modOutSecNum[l]-1] = qMax( 1.f, subUnisonNum[modOutSecNum[l]-1] + comboModValMono * 32.f );
 							modValType.push_back( 83 );
 							modValNum.push_back( modOutSecNum[l]-1 );
 							break;
 						}
 						case 8:// Send input to Unison Detune
 						{
-							subUnisonDetune[modOutSecNum[l]-1] = qMax( 0.f, subUnisonDetune[modOutSecNum[l]-1] + comboModValMono * 2.f );
+							subUnisonDetune[modOutSecNum[l]-1] = qMax( 0.f, subUnisonDetune[modOutSecNum[l]-1] + comboModValMono * 2000.f );
 							modValType.push_back( 84 );
 							modValNum.push_back( modOutSecNum[l]-1 );
 							break;
@@ -3718,6 +3780,13 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 						{
 							sampleVolume[modOutSecNum[l]-1] = qMax( 0.f, sampleVolume[modOutSecNum[l]-1] + comboModValMono * 100.f );
 							modValType.push_back( 64 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 4:// Send input to Panning
+						{
+							samplePanning[modOutSecNum[l]-1] = qBound( -100.f, samplePanning[modOutSecNum[l]-1] + comboModValMono * 100.f, 100.f );
+							modValType.push_back( 65 );
 							modValNum.push_back( modOutSecNum[l]-1 );
 							break;
 						}
@@ -3760,6 +3829,55 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 						{
 							modInCurve2[modOutSecNum[l]-1] = qMax( 0.f, modInCurve2[modOutSecNum[l]-1] + comboModValMono*100.f );
 							modValType.push_back( 44 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 5:// Mod In
+						{
+							modIn[modOutSecNum[l]-1] = qMax( 0.f, modIn[modOutSecNum[l]-1] + comboModValMono*100.f );
+							modValType.push_back( 35 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 6:// Mod In Num
+						{
+							modInNum[modOutSecNum[l]-1] = qMax( 0.f, modInNum[modOutSecNum[l]-1] + comboModValMono*100.f );
+							modValType.push_back( 36 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 7:// Secondary Mod In
+						{
+							modIn2[modOutSecNum[l]-1] = qMax( 0.f, modIn2[modOutSecNum[l]-1] + comboModValMono*100.f );
+							modValType.push_back( 40 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 8:// Secondary Mod In Num
+						{
+							modInNum2[modOutSecNum[l]-1] = qMax( 0.f, modInNum2[modOutSecNum[l]-1] + comboModValMono*100.f );
+							modValType.push_back( 41 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 9:// Mod Out Sec
+						{
+							modOutSec[modOutSecNum[l]-1] = qMax( 0.f, modOutSec[modOutSecNum[l]-1] + comboModValMono*100.f );
+							modValType.push_back( 65 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 10:// Mod Out Sig
+						{
+							modOutSig[modOutSecNum[l]-1] = qMax( 0.f, modOutSig[modOutSecNum[l]-1] + comboModValMono*100.f );
+							modValType.push_back( 66 );
+							modValNum.push_back( modOutSecNum[l]-1 );
+							break;
+						}
+						case 11:// Mod Out Sec Num
+						{
+							modOutSecNum[modOutSecNum[l]-1] = qMax( 0.f, modOutSecNum[modOutSecNum[l]-1] + comboModValMono*100.f );
+							modValType.push_back( 67 );
 							modValNum.push_back( modOutSecNum[l]-1 );
 							break;
 						}
@@ -4512,13 +4630,7 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 						temp1 = ( subs[int(noiseSampRand)] * subNoiseDirection[i][l] ) + lastSubVal[i][0];
 					}
 
-					subsample[i][l] = temp1 * ( subVol[i] * 0.01f );// Division by 1.2f to tame DC offset
-				}
-
-				// Mutes sub after saving value for modulation if the muted option is on
-				if( subMuted[i] )
-				{
-					subsample[i][l] = 0;
+					subsample[i][l] = temp1 * ( subVol[i] * 0.01f );
 				}
 			}
 			else
@@ -4633,10 +4745,10 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 	{
 		if( enabled[i] )
 		{
-			if( unisonVoices[i] > 1 )
-			{
-				unisonVoicesMinusOne = unisonVoices[i] - 1;
+			unisonVoicesMinusOne = unisonVoices[i] - 1;
 
+			if( unisonVoicesMinusOne )
+			{
 				sampleMainOsc[0] = 0;
 				sampleMainOsc[1] = 0;
 				for( int j = 0; j < unisonVoices[i]; ++j )
@@ -4732,8 +4844,8 @@ std::vector<float> mSynth::nextStringSample( float (&waveforms)[8][524288], floa
 				sampleSubOsc[1] = lastSubVal[i][1] + qBound( -subRateLimit[i], sampleSubOsc[1] - lastSubVal[i][1], subRateLimit[i] );
 			}
 
-			lastMainOscVal[i][0] = sampleSubOsc[0];// Store results for modulations
-			lastMainOscVal[i][1] = sampleSubOsc[1];
+			lastSubVal[i][0] = sampleSubOsc[0];// Store results for modulations
+			lastSubVal[i][1] = sampleSubOsc[1];
 
 			if( !lastSubEnvDone[i] )
 			{

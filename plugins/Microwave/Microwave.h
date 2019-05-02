@@ -79,7 +79,7 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Filter Output" ), make_unique<PluginPixmapLoader>( "moog" ) );\
 		name ->addItem( tr( "Velocity" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
-		name ->addItem( tr( "Humanizer" ), make_unique<PluginPixmapLoader>( "sinabs" ) );\
+		name ->addItem( tr( "Humanizer" ), make_unique<PluginPixmapLoader>( "letter_h" ) );\
 		name ->addItem( tr( "Macro" ), make_unique<PluginPixmapLoader>( "letter_m" ) );
 
 #define modsectionsmodel( name )\
@@ -111,6 +111,8 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Phase" ), make_unique<PluginPixmapLoader>( "sin" ) );\
 		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );\
+		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "letter_p" ) );\
+		name ->addItem( tr( "Length" ), make_unique<PluginPixmapLoader>( "letter_l" ) );\
 		name ->addItem( tr( "Rate Limit" ), make_unique<PluginPixmapLoader>( "letter_r" ) );\
 		name ->addItem( tr( "Unison Voice Number" ), make_unique<PluginPixmapLoader>( "ramp" ) );\
 		name ->addItem( tr( "Unison Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );
@@ -120,15 +122,21 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Detune" ), make_unique<PluginPixmapLoader>( "saw" ) );\
 		name ->addItem( tr( "Phase" ), make_unique<PluginPixmapLoader>( "sin" ) );\
 		name ->addItem( tr( "Volume" ), make_unique<PluginPixmapLoader>( "letter_v" ) );\
-		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "letter_p" ) );\
-		name ->addItem( tr( "Length" ), make_unique<PluginPixmapLoader>( "sin" ) );
+		name ->addItem( tr( "Panning" ), make_unique<PluginPixmapLoader>( "letter_p" ) );
 
 #define matrixsignalsmodel( name )\
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
-		name ->addItem( tr( "Amount" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Curve" ), make_unique<PluginPixmapLoader>( "moog" ) );\
-		name ->addItem( tr( "Secondary Amount" ), make_unique<PluginPixmapLoader>( "sin" ) );\
-		name ->addItem( tr( "Secondary Curve" ), make_unique<PluginPixmapLoader>( "moog" ) );
+		name ->addItem( tr( "Amount" ), make_unique<PluginPixmapLoader>( "letter_a" ) );\
+		name ->addItem( tr( "Curve" ), make_unique<PluginPixmapLoader>( "letter_c" ) );\
+		name ->addItem( tr( "Secondary Amount" ), make_unique<PluginPixmapLoader>( "letter_a" ) );\
+		name ->addItem( tr( "Secondary Curve" ), make_unique<PluginPixmapLoader>( "letter_c" ) );\
+		name ->addItem( tr( "Input Section" ), make_unique<PluginPixmapLoader>( "letter_i" ) );\
+		name ->addItem( tr( "Input Number" ), make_unique<PluginPixmapLoader>( "letter_i" ) );\
+		name ->addItem( tr( "Secondary Input Section" ), make_unique<PluginPixmapLoader>( "letter_i" ) );\
+		name ->addItem( tr( "Secondary Input Number" ), make_unique<PluginPixmapLoader>( "letter_i" ) );\
+		name ->addItem( tr( "Output Section 1" ), make_unique<PluginPixmapLoader>( "letter_o" ) );\
+		name ->addItem( tr( "Output Section 2" ), make_unique<PluginPixmapLoader>( "letter_o" ) );\
+		name ->addItem( tr( "Output Section Number" ), make_unique<PluginPixmapLoader>( "letter_o" ) );\
 
 #define filtersignalsmodel( name )\
 		name ->addItem( tr( "None" ), make_unique<PluginPixmapLoader>( "none" ) );\
@@ -164,7 +172,7 @@ class Microwave : public Instrument
 		name ->addItem( tr( "Peak" ), make_unique<PluginPixmapLoader>( "filter_peak" ) );\
 		name ->addItem( tr( "Notch" ), make_unique<PluginPixmapLoader>( "filter_notch" ) );\
 		name ->addItem( tr( "Allpass" ), make_unique<PluginPixmapLoader>( "filter_allpass" ) );\
-		name ->addItem( tr( "Moog Lowpass (Note: Slope is doubled)" ), make_unique<PluginPixmapLoader>( "filter_moog" ) );
+		name ->addItem( tr( "Moog Lowpass (Note: Slope is double)" ), make_unique<PluginPixmapLoader>( "filter_moog" ) );
 
 #define filterslopesmodel( name )\
 		name ->addItem( tr( "12 db" ), make_unique<PluginPixmapLoader>( "number_1" ) );\
@@ -451,12 +459,12 @@ public:
 
 protected slots:
 	void updateScroll();
-	void scrollReleased();
 	void mainNumChanged();
 	void subNumChanged();
 	void sampNumChanged();
 	void modOutSecChanged( int i );
 	void modInChanged( int i );
+	void modIn2Changed( int i );
 	void tabChanged( int tabnum );
 	void visualizeToggled( bool value );
 	void sinWaveClicked();
@@ -524,8 +532,8 @@ private:
 	PixmapButton * confirmLoadButton;
 	PixmapButton * openSampleButton;
 
-	PixmapButton * modUpArrow[64];
-	PixmapButton * modDownArrow[64];
+	PixmapButton * modUpArrow[8];
+	PixmapButton * modDownArrow[8];
 
 	PixmapButton * tab1Btn;
 	PixmapButton * tab2Btn;
