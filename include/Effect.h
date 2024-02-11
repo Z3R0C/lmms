@@ -116,6 +116,27 @@ public:
 		const float samples = Engine::audioEngine()->processingSampleRate() * m_autoQuitModel.value() / 1000.0f;
 		return 1 + ( static_cast<int>( samples ) / Engine::audioEngine()->framesPerPeriod() );
 	}
+	
+			inline float panAmount() const
+	{
+		return m_panModel.value();
+	}
+	inline float wetLevelL() const
+	{
+		return ( m_panModel.value() < 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( -m_panModel.value() + 100 ) / 100 ) );
+	}
+	inline float wetLevelR() const
+	{
+		return ( m_panModel.value() > 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( m_panModel.value() + 100 ) / 100 ) );
+	}
+	inline float dryLevelL() const
+	{
+		return 1.0f - ( ( m_panModel.value() < 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( -m_panModel.value() + 100 ) / 100 ) ) );
+	}
+	inline float dryLevelR() const
+	{
+		return 1.0f - ( ( m_panModel.value() > 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( m_panModel.value() + 100 ) / 100 ) ) );
+	}
 
 	inline float wetLevel() const
 	{
