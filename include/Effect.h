@@ -116,7 +116,7 @@ public:
 		const float samples = Engine::audioEngine()->processingSampleRate() * m_autoQuitModel.value() / 1000.0f;
 		return 1 + ( static_cast<int>( samples ) / Engine::audioEngine()->framesPerPeriod() );
 	}
-	
+
 			inline float panAmount() const
 	{
 		return m_panModel.value();
@@ -248,6 +248,7 @@ private:
 
 	BoolModel m_enabledModel;
 	FloatModel m_wetDryModel;
+	FloatModel m_panModel;
 	FloatModel m_gateModel;
 	TempoSyncKnobModel m_autoQuitModel;
 	
