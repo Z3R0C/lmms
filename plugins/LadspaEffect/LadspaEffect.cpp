@@ -224,8 +224,8 @@ bool LadspaEffect::processAudioBuffer( sampleFrame * _buf,
 	// Copy the LADSPA output buffers to the LMMS buffer.
 	double out_sum = 0.0;
 	channel = 0;
-	const float d [2] = {dryLevelL(),dryLevelR()};
-	const float w [2] = {wetLevelL(),wetLevelR()};
+	const float d = dryLevel();
+	const float w = wetLevel();
 	for( ch_cnt_t proc = 0; proc < processorCount(); ++proc )
 	{
 		for( int port = 0; port < m_portCount; ++port )
@@ -241,8 +241,7 @@ bool LadspaEffect::processAudioBuffer( sampleFrame * _buf,
 					for( fpp_t frame = 0;
 						frame < frames; ++frame )
 					{
-						_buf[frame][0] = d[0] * _buf[frame][0] + w[0] * pp->buffer[frame];
-						_buf[frame][1] = d[1] * _buf[frame][1] + w[1] * pp->buffer[frame];
+						_buf[frame][channel] = d * _buf[frame][channel] + w * pp->buffer[frame];
 						out_sum += _buf[frame][channel] * _buf[frame][channel];
 					}
 					++channel;
