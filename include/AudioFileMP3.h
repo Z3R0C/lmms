@@ -58,7 +58,9 @@ public:
 	}
 
 protected:
-	void writeBuffer(const surroundSampleFrame* /* _buf*/, const fpp_t /*_frames*/) override;
+	void writeBuffer( const surroundSampleFrame * /* _buf*/,
+				  const fpp_t /*_frames*/,
+				  const float /*_master_gain*/ ) override;
 
 private:
 	void flushRemainingBuffers();

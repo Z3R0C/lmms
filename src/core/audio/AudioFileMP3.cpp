@@ -53,7 +53,9 @@ AudioFileMP3::~AudioFileMP3()
 	tearDownEncoder();
 }
 
-void AudioFileMP3::writeBuffer(const surroundSampleFrame* _buf, const fpp_t _frames)
+void AudioFileMP3::writeBuffer( const surroundSampleFrame * _buf,
+					const fpp_t _frames,
+					const float _master_gain )
 {
 	if (_frames < 1)
 	{
@@ -64,8 +66,8 @@ void AudioFileMP3::writeBuffer(const surroundSampleFrame* _buf, const fpp_t _fra
 	std::vector<float> interleavedDataBuffer(_frames * 2);
 	for (fpp_t i = 0; i < _frames; ++i)
 	{
-		interleavedDataBuffer[2*i] = _buf[i][0];
-		interleavedDataBuffer[2*i + 1] = _buf[i][1];
+		interleavedDataBuffer[2*i] = _buf[i][0] * _master_gain;
+		interleavedDataBuffer[2*i + 1] = _buf[i][1] * _master_gain;
 	}
 
 	size_t minimumBufferSize = 1.25 * _frames + 7200;
