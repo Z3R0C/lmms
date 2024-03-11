@@ -93,7 +93,12 @@ bool AudioFileWave::startEncoding()
 	return true;
 }
 
-void AudioFileWave::writeBuffer(const surroundSampleFrame* _ab, const fpp_t _frames)
+
+
+
+void AudioFileWave::writeBuffer( const surroundSampleFrame * _ab,
+						const fpp_t _frames,
+						const float _master_gain )
 {
 	OutputSettings::BitDepth bitDepth = getOutputSettings().getBitDepth();
 
@@ -104,7 +109,8 @@ void AudioFileWave::writeBuffer(const surroundSampleFrame* _ab, const fpp_t _fra
 		{
 			for( ch_cnt_t chnl = 0; chnl < channels(); ++chnl )
 			{
-				buf[frame * channels() + chnl] = _ab[frame][chnl];
+				buf[frame*channels()+chnl] = _ab[frame][chnl] *
+								_master_gain;
 			}
 		}
 		sf_writef_float( m_sf, buf, _frames );
@@ -113,7 +119,8 @@ void AudioFileWave::writeBuffer(const surroundSampleFrame* _ab, const fpp_t _fra
 	else
 	{
 		auto buf = new int_sample_t[_frames * channels()];
-		convertToS16(_ab, _frames, buf, !isLittleEndian());
+		convertToS16( _ab, _frames, _master_gain, buf,
+							!isLittleEndian() );
 
 		sf_writef_short( m_sf, buf, _frames );
 		delete[] buf;

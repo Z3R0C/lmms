@@ -65,7 +65,9 @@ private:
 	SF_INFO  m_sfinfo;
 	SNDFILE* m_sf;
 
-	void writeBuffer(surroundSampleFrame const* _ab, fpp_t const frames) override;
+	void writeBuffer(surroundSampleFrame const* _ab,
+						fpp_t const frames,
+						float master_gain) override;
 
 	bool startEncoding();
 	void finishEncoding();
