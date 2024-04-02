@@ -56,7 +56,7 @@ Plugin::Descriptor PLUGIN_EXPORT dynamicsprocessor_plugin_descriptor =
 }
 
 const float DYN_NOISE_FLOOR = 0.00001f; // -100dBFS noise floor
-const double DNF_LOG = 5.0;
+const double DNF_LOG = -1.0;
 
 DynProcEffect::DynProcEffect( Model * _parent,
 			const Descriptor::SubPluginFeatures::Key * _key ) :
@@ -84,12 +84,12 @@ DynProcEffect::~DynProcEffect()
 
 inline void DynProcEffect::calcAttack()
 {
-	m_attCoeff = std::pow(10.f, ( DNF_LOG / ( m_dpControls.m_attackModel.value() * 0.001 ) ) / Engine::audioEngine()->processingSampleRate() );
+	m_attCoeff = std::exp((DNF_LOG / (m_dpControls.m_attackModel.value() * 0.001)) / Engine::audioEngine()->processingSampleRate());
 }
 
 inline void DynProcEffect::calcRelease()
 {
-	m_relCoeff = std::pow(10.f, ( -DNF_LOG / ( m_dpControls.m_releaseModel.value() * 0.001 ) ) / Engine::audioEngine()->processingSampleRate() );
+	m_relCoeff = std::exp((DNF_LOG / (m_dpControls.m_releaseModel.value() * 0.001)) / Engine::audioEngine()->processingSampleRate());
 }
 
 
@@ -108,7 +108,6 @@ bool DynProcEffect::processAudioBuffer( sampleFrame * _buf,
 	int i = 0;
 
 	auto sm_peak = std::array{0.0f, 0.0f};
-	float gain;
 
 	double out_sum = 0.0;
 	const float d [2] = {dryLevelL(),dryLevelR()};
@@ -160,15 +159,15 @@ bool DynProcEffect::processAudioBuffer( sampleFrame * _buf,
 			m_smoothRms[i] = m_smoothRms[i] * (1-dif) + t * dif;
 			if( t > m_currentPeak[i] )
 			{
-				m_currentPeak[i] = qMin(m_currentPeak[i] * m_attCoeff, m_smoothRms[i]);
+				m_currentPeak[i] = m_currentPeak[i] * m_attCoeff + (1 - m_attCoeff) * t;
 			}
 			else
 			if( t < m_currentPeak[i] )
 			{
-				m_currentPeak[i] = qMax(m_currentPeak[i] * m_relCoeff, m_smoothRms[i]);
+				m_currentPeak[i] = m_currentPeak[i] * m_relCoeff + (1 - m_relCoeff) * t;
 			}
 
-			m_currentPeak[i] = qBound( DYN_NOISE_FLOOR, m_currentPeak[i], 10.0f );
+			m_currentPeak[i] = std::max(DYN_NOISE_FLOOR, m_currentPeak[i]);
 		}
 
 // account for stereo mode
@@ -201,20 +200,10 @@ bool DynProcEffect::processAudioBuffer( sampleFrame * _buf,
 
 			if( sm_peak[i] > DYN_NOISE_FLOOR )
 			{
-				if ( lookup < 1 )
-				{
-					gain = frac * samples[0];
-				}
-				else
-				if ( lookup < 200 )
-				{
-					gain = linearInterpolate( samples[ lookup - 1 ],
-							samples[ lookup ], frac );
-				}
-				else
-				{
-					gain = samples[199];
-				};
+				float gain;
+				if (lookup < 1) { gain = frac * samples[0]; }
+				else if (lookup < 200) { gain = linearInterpolate(samples[lookup - 1], samples[lookup], frac); }
+				else { gain = samples[199]; }
 
 				s[i] *= gain;
 				s[i] /= sm_peak[i];

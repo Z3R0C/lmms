@@ -75,7 +75,7 @@ InstrumentSoundShapingView::InstrumentSoundShapingView( QWidget * _parent ) :
 
 	m_filterComboBox = new ComboBox( m_filterGroupBox );
 	m_filterComboBox->setGeometry( 14, 22, 120, ComboBox::DEFAULT_HEIGHT );
-	m_filterComboBox->setFont( pointSize<8>( m_filterComboBox->font() ) );
+	m_filterComboBox->setFont(pointSize(m_filterComboBox->font(), 8));
 
 
 	m_filterCutKnob = new Knob( KnobType::Bright26, m_filterGroupBox );
