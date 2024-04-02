@@ -40,6 +40,7 @@
 namespace lmms
 {
 
+int AutomationClip::s_quantization = 1;
 const float AutomationClip::DEFAULT_MIN_VALUE = 0;
 const float AutomationClip::DEFAULT_MAX_VALUE = 1;
 
@@ -128,7 +129,7 @@ bool AutomationClip::addObject( AutomatableModel * _obj, bool _search_dup )
 	if (m_objects.empty() && hasAutomation() == false)
 	{
 		// then initialize first value
-		putValue(TimePos(0), _obj->inverseScaledValue(_obj->value<float>()));
+		putValue( TimePos(0), _obj->inverseScaledValue( _obj->value<float>() ), false );
 	}
 
 	m_objects.push_back(_obj);
@@ -227,40 +228,49 @@ void AutomationClip::updateLength()
 	changeLength(std::max(length(), timeMapLength()));
 }
 
+
+
+
 /**
  * @brief Puts an automation node on the timeMap with the given value.
  *        The inValue and outValue of the created node will be the same.
- * @param time time to add the node to
- * @param value inValue and outValue of the node
- * @param clear Clear surrounding nodes within this duration
+ * @param TimePos time to add the node to
+ * @param Float inValue and outValue of the node
+ * @param Boolean True to quantize the position (defaults to true)
+ * @param Boolean True to ignore unquantized surrounding nodes (defaults to true)
  * @return TimePos of the recently added automation node
  */
 TimePos AutomationClip::putValue(
-	TimePos time,
+	const TimePos & time,
 	const float value,
-	const tick_t clear
+	const bool quantPos,
+	const bool ignoreSurroundingPoints
 )
 {
 	QMutexLocker m(&m_clipMutex);
 
 	cleanObjects();
 
-	time = std::max(time, TimePos{0});
+	TimePos newTime = quantPos ? Note::quantized(time, quantization()) : time;
 
-	// Create a node or replace the existing one at time
-	m_timeMap[time] = AutomationNode(this, value, time);
+	// Create a node or replace the existing one on newTime
+	m_timeMap[newTime] = AutomationNode(this, value, newTime);
 
-	timeMap::iterator it = m_timeMap.find(time);
+	timeMap::iterator it = m_timeMap.find(newTime);
 
-	// Remove control points that are covered by the new point's
-	// quantization value
-	if (clear > 1)
+	// Remove control points that are covered by the new points
+	// quantization value. Control Key to override
+	if (!ignoreSurroundingPoints)
 	{
-		// Remove nodes between the quantization points, them not
-		// being included
-		removeNodes(time + 1, time + clear - 1);
+		// We need to check that to avoid removing nodes from
+		// newTime + 1 to newTime (removing the node we are adding)
+		if (quantization() > 1)
+		{
+			// Remove nodes between the quantization points, them not
+			// being included
+			removeNodes(newTime + 1, newTime + quantization() - 1);
+		}
 	}
-
 	if (it != m_timeMap.begin()) { --it; }
 	generateTangents(it, 3);
 
@@ -268,45 +278,54 @@ TimePos AutomationClip::putValue(
 
 	emit dataChanged();
 
-	return time;
+	return newTime;
 }
+
+
+
 
 /**
  * @brief Puts an automation node on the timeMap with the given inValue
  *        and outValue.
- * @param time time to add the node to
- * @param inValue inValue of the node
- * @param outValue outValue of the node
- * @param clear Clear surrounding nodes within this duration
+ * @param TimePos time to add the node to
+ * @param Float inValue of the node
+ * @param Float outValue of the node
+ * @param Boolean True to quantize the position (defaults to true)
+ * @param Boolean True to ignore unquantized surrounding nodes (defaults to true)
  * @return TimePos of the recently added automation node
  */
 TimePos AutomationClip::putValues(
-	TimePos time,
+	const TimePos & time,
 	const float inValue,
 	const float outValue,
-	const tick_t clear
+	const bool quantPos,
+	const bool ignoreSurroundingPoints
 )
 {
 	QMutexLocker m(&m_clipMutex);
 
 	cleanObjects();
 
-	time = std::max(time, TimePos{0});
+	TimePos newTime = quantPos ? Note::quantized(time, quantization()) : time;
 
-	// Create a node or replace the existing one on time
-	m_timeMap[time] = AutomationNode(this, inValue, outValue, time);
+	// Create a node or replace the existing one on newTime
+	m_timeMap[newTime] = AutomationNode(this, inValue, outValue, newTime);
 
-	timeMap::iterator it = m_timeMap.find(time);
+	timeMap::iterator it = m_timeMap.find(newTime);
 
-	// Remove control points that are covered by the new point's
-	// quantization value
-	if (clear > 1)
+	// Remove control points that are covered by the new points
+	// quantization value. Control Key to override
+	if (!ignoreSurroundingPoints)
 	{
-		// Remove nodes between the quantization points, them not
-		// being included
-		removeNodes(time + 1, time + clear - 1);
+		// We need to check that to avoid removing nodes from
+		// newTime + 1 to newTime (removing the node we are adding)
+		if (quantization() > 1)
+		{
+			// Remove nodes between the quantization points, them not
+			// being included
+			removeNodes(newTime + 1, newTime + quantization() - 1);
+		}
 	}
-
 	if (it != m_timeMap.begin()) { --it; }
 	generateTangents(it, 3);
 
@@ -314,8 +333,11 @@ TimePos AutomationClip::putValues(
 
 	emit dataChanged();
 
-	return time;
+	return newTime;
 }
+
+
+
 
 void AutomationClip::removeNode(const TimePos & time)
 {
@@ -432,7 +454,7 @@ void AutomationClip::recordValue(TimePos time, float value)
 
 	if( value != m_lastRecordedValue )
 	{
-		putValue(time, value);
+		putValue( time, value, true );
 		m_lastRecordedValue = value;
 	}
 	else if( valueAt( time ) != value )
@@ -448,23 +470,25 @@ void AutomationClip::recordValue(TimePos time, float value)
  * @brief Set the position of the point that is being dragged.
  *        Calling this function will also automatically set m_dragging to true.
  *        When applyDragValue() is called, m_dragging is set back to false.
- * @param time position of the node being dragged
- * @param value the value to assign to the point being dragged
- * @param clear Clear surrounding nodes within this duration
+ * @param TimePos of the node being dragged
+ * @param Float with the value to assign to the point being dragged
+ * @param Boolean. True to snip x position
+ * @param Boolean. True to ignore unquantized surrounding nodes
  * @return TimePos with current time of the dragged value
  */
 TimePos AutomationClip::setDragValue(
-	TimePos time,
+	const TimePos & time,
 	const float value,
-	const tick_t clear
+	const bool quantPos,
+	const bool controlKey
 )
 {
 	QMutexLocker m(&m_clipMutex);
 
-	time = std::max(time, TimePos{0});
-
 	if (m_dragging == false)
 	{
+		TimePos newTime = quantPos ? Note::quantized(time, quantization()) : time;
+
 		// We will keep the same outValue only if it's different from the
 		// inValue
 		m_dragKeepOutValue = false;
@@ -476,7 +500,7 @@ TimePos AutomationClip::setDragValue(
 		// Check if we already have a node on the position we are dragging
 		// and if we do, store the outValue so the discrete jump can be kept
 		// and information about the tangents
-		timeMap::iterator it = m_timeMap.find(time);
+		timeMap::iterator it = m_timeMap.find(newTime);
 		if (it != m_timeMap.end())
 		{
 			// If we don't have a discrete jump, the outValue will be the
@@ -496,7 +520,7 @@ TimePos AutomationClip::setDragValue(
 			}
 		}
 
-		this->removeNode(time);
+		this->removeNode(newTime);
 		m_oldTimeMap = m_timeMap;
 		m_dragging = true;
 	}
@@ -510,11 +534,11 @@ TimePos AutomationClip::setDragValue(
 
 	if (m_dragKeepOutValue)
 	{
-		returnedPos = this->putValues(time, value, m_dragOutValue, clear);
+		returnedPos = this->putValues(time, value, m_dragOutValue, quantPos, controlKey);
 	}
 	else
 	{
-		returnedPos = this->putValue(time, value, clear);
+		returnedPos = this->putValue(time, value, quantPos, controlKey);
 	}
 
 	// Set the tangents on the newly created node if they were locked
