@@ -92,8 +92,20 @@ public:
 	TimePos timeMapLength() const;
 	void updateLength();
 
-	TimePos putValue(TimePos time, float value, tick_t clear = 0);
-	TimePos putValues(TimePos time, float inValue, float outValue, tick_t clear = 0);
+	TimePos putValue(
+		const TimePos & time,
+		const float value,
+		const bool quantPos = true,
+		const bool ignoreSurroundingPoints = true
+	);
+
+	TimePos putValues(
+		const TimePos & time,
+		const float inValue,
+		const float outValue,
+		const bool quantPos = true,
+		const bool ignoreSurroundingPoints = true
+	);
 
 	void removeNode(const TimePos & time);
 	void removeNodes(const int tick0, const int tick1);
@@ -109,7 +121,10 @@ public:
 
 	void recordValue(TimePos time, float value);
 
-	TimePos setDragValue(TimePos time, float value, tick_t clear);
+	TimePos setDragValue( const TimePos & time,
+				const float value,
+				const bool quantPos = true,
+				const bool controlKey = false );
 
 	void applyDragValue();
 
@@ -178,6 +193,9 @@ public:
 	bool isRecording() const { return m_isRecording; }
 	void setRecording( const bool b ) { m_isRecording = b; }
 
+	static int quantization() { return s_quantization; }
+	static void setQuantization(int q) { s_quantization = q; }
+
 public slots:
 	void clear();
 	void objectDestroyed( lmms::jo_id_t );
@@ -226,6 +244,8 @@ private:
 
 	bool m_isRecording;
 	float m_lastRecordedValue;
+
+	static int s_quantization;
 
 	static const float DEFAULT_MIN_VALUE;
 	static const float DEFAULT_MAX_VALUE;

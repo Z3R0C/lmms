@@ -31,7 +31,6 @@
 
 #include "volume.h"
 #include "panning.h"
-#include "QuantizationGrid.h"
 #include "SerializingObject.h"
 #include "TimePos.h"
 
@@ -138,8 +137,8 @@ public:
 	void setKey( const int key );
 	virtual void setVolume( volume_t volume );
 	virtual void setPanning( panning_t panning );
-	void quantizeLength(const QuantizationGrid& grid);
-	void quantizePos(const QuantizationGrid& grid);
+	void quantizeLength( const int qGrid );
+	void quantizePos( const int qGrid );
 
 	static inline bool lessThan( const Note * lhs, const Note * rhs )
 	{
@@ -232,6 +231,8 @@ public:
 	{
 		return classNodeName();
 	}
+
+	static TimePos quantized( const TimePos & m, const int qGrid );
 
 	DetuningHelper * detuning() const
 	{

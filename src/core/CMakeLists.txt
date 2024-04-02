@@ -62,7 +62,6 @@ set(LMMS_SRCS
 	core/ProjectJournal.cpp
 	core/ProjectRenderer.cpp
 	core/ProjectVersion.cpp
-	core/QuantizationGrid.cpp
 	core/RemotePlugin.cpp
 	core/RenderManager.cpp
 	core/RingBuffer.cpp
