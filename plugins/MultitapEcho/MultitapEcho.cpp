@@ -101,8 +101,8 @@ bool MultitapEchoEffect::processAudioBuffer( sampleFrame * buf, const fpp_t fram
 	}
 	
 	double outSum = 0.0;
-	const float d [2] = {dryLevelL(),dryLevelR()};
-	const float w [2] = {wetLevelL(),wetLevelR()};
+	const float d = dryLevel();
+	const float w = wetLevel();
 
 	// get processing vars
 	const int steps = m_controls.m_steps.value();
@@ -153,8 +153,8 @@ bool MultitapEchoEffect::processAudioBuffer( sampleFrame * buf, const fpp_t fram
 
 	for( int f = 0; f < frames; ++f )
 	{
-		buf[f][0] = d[0] * buf[f][0] + w[0] * m_work[f][0];
-		buf[f][1] = d[1] * buf[f][1] + w[1] * m_work[f][1];
+		buf[f][0] = d * buf[f][0] + w * m_work[f][0];
+		buf[f][1] = d * buf[f][1] + w * m_work[f][1];
 		outSum += buf[f][0]*buf[f][0] + buf[f][1]*buf[f][1];
 	}
 	
