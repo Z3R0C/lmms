@@ -110,6 +110,7 @@ private slots:
 
 	// MIDI settings widget.
 	void midiInterfaceChanged(const QString & driver);
+	void toggleMidiAutoQuantization(bool enabled);
 
 	// Paths settings widget.
 	void openWorkingDir();
@@ -192,6 +193,7 @@ private:
 	MswMap m_midiIfaceSetupWidgets;
 	trMap m_midiIfaceNames;
 	QComboBox * m_assignableMidiDevices;
+	bool m_midiAutoQuantize;
 
 	// Paths settings widgets.
 	QString m_workingDir;
