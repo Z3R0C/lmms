@@ -471,7 +471,6 @@ public:
 	QString displayValue( const float val ) const override;
 } ;
 
-// TODO: Add DoubleModel?
 
 class LMMS_EXPORT IntModel : public TypedAutomatableModel<int>
 {

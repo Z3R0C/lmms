@@ -58,7 +58,6 @@
 
 #ifdef LMMS_BUILD_LINUX
 #	include <X11/Xlib.h>
-#	undef None
 #endif
 
 namespace PE
@@ -125,9 +124,9 @@ enum class ExecutableType
 VstPlugin::VstPlugin( const QString & _plugin ) :
 	m_plugin( PathUtil::toAbsolute(_plugin) ),
 	m_pluginWindowID( 0 ),
-	m_embedMethod(gui::getGUI() != nullptr
+	m_embedMethod( (gui::getGUI() != nullptr)
 			? ConfigManager::inst()->vstEmbedMethod()
-			: WindowEmbed::Method::Headless),
+			: "headless" ),
 	m_version( 0 ),
 	m_currentProgram()
 {
@@ -207,7 +206,7 @@ VstPlugin::~VstPlugin()
 
 void VstPlugin::tryLoad( const QString &remoteVstPluginExecutable )
 {
-	init( remoteVstPluginExecutable, false, { WindowEmbed::toString(m_embedMethod).data() } );
+	init( remoteVstPluginExecutable, false, {m_embedMethod} );
 
 	waitForHostInfoGotten();
 	if( failed() )
@@ -272,7 +271,7 @@ void VstPlugin::loadSettings( const QDomElement & _this )
 
 void VstPlugin::saveSettings( QDomDocument & _doc, QDomElement & _this )
 {
-	if (m_embedMethod != WindowEmbed::Method::Floating)
+	if ( m_embedMethod != "none" )
 	{
 		if( pluginWidget() != nullptr )
 		{
@@ -312,7 +311,7 @@ void VstPlugin::saveSettings( QDomDocument & _doc, QDomElement & _this )
 
 void VstPlugin::toggleUI()
 {
-	if (m_embedMethod == WindowEmbed::Method::Floating)
+	if ( m_embedMethod == "none" )
 	{
 		RemotePlugin::toggleUI();
 	}
@@ -405,7 +404,7 @@ bool VstPlugin::processMessage( const message & _m )
 	{
 	case IdVstPluginWindowID:
 		m_pluginWindowID = _m.getInt();
-		if (m_embedMethod == WindowEmbed::Method::Floating
+		if( m_embedMethod == "none"
 			&& ConfigManager::inst()->value(
 				"ui", "vstalwaysontop" ).toInt() )
 		{
@@ -632,11 +631,11 @@ void VstPlugin::idleUpdate()
 
 void VstPlugin::showUI()
 {
-	if (m_embedMethod == WindowEmbed::Method::Floating)
+	if ( m_embedMethod == "none" )
 	{
 		RemotePlugin::showUI();
 	}
-	else if (m_embedMethod != WindowEmbed::Method::Headless)
+	else if ( m_embedMethod != "headless" )
 	{
 		if (! editor()) {
 			qWarning() << "VstPlugin::showUI called before VstPlugin::createUI";
@@ -647,7 +646,7 @@ void VstPlugin::showUI()
 
 void VstPlugin::hideUI()
 {
-	if (m_embedMethod == WindowEmbed::Method::Floating)
+	if ( m_embedMethod == "none" )
 	{
 		RemotePlugin::hideUI();
 	}
@@ -737,7 +736,7 @@ void VstPlugin::createUI( QWidget * parent )
 	QWidget* container = nullptr;
 
 #if QT_VERSION >= 0x050100
-	if (m_embedMethod == WindowEmbed::Method::Qt)
+	if (m_embedMethod == "qt" )
 	{
 		QWindow* vw = QWindow::fromWinId(m_pluginWindowID);
 		container = QWidget::createWindowContainer(vw, parent );
@@ -746,7 +745,7 @@ void VstPlugin::createUI( QWidget * parent )
 #endif
 
 #ifdef LMMS_BUILD_WIN32
-	if (m_embedMethod == WindowEmbed::Method::Win32)
+	if (m_embedMethod == "win32" )
 	{
 		QWidget * helper = new QWidget;
 		QHBoxLayout * l = new QHBoxLayout( helper );
@@ -777,7 +776,7 @@ void VstPlugin::createUI( QWidget * parent )
 #endif
 
 #ifdef LMMS_BUILD_LINUX
-	if (m_embedMethod == WindowEmbed::Method::XEmbed)
+	if (m_embedMethod == "xembed" )
 	{
 		if (parent)
 		{
@@ -790,7 +789,7 @@ void VstPlugin::createUI( QWidget * parent )
 	} else
 #endif
 	{
-		qCritical() << "Unknown embed method" << WindowEmbed::toString(m_embedMethod).data();
+		qCritical() << "Unknown embed method" << m_embedMethod;
 		return;
 	}
 
@@ -803,7 +802,7 @@ void VstPlugin::createUI( QWidget * parent )
 bool VstPlugin::eventFilter(QObject *obj, QEvent *event)
 {
 #if QT_VERSION >= 0x050100
-	if (embedMethod() == WindowEmbed::Method::Qt && obj == m_pluginWidget)
+	if (embedMethod() == "qt" && obj == m_pluginWidget)
 	{
 		if (event->type() == QEvent::Show) {
 			RemotePlugin::showUI();
@@ -814,7 +813,7 @@ bool VstPlugin::eventFilter(QObject *obj, QEvent *event)
 	return false;
 }
 
-WindowEmbed::Method VstPlugin::embedMethod() const
+QString VstPlugin::embedMethod() const
 {
 	return m_embedMethod;
 }

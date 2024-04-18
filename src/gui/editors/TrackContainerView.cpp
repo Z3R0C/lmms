@@ -395,18 +395,8 @@ void TrackContainerView::dropEvent( QDropEvent * _de )
 	if( type == "instrument" )
 	{
 		auto it = dynamic_cast<InstrumentTrack*>(Track::create(Track::Type::Instrument, m_tc));
-
-		if (value == "clapinstrument")
-		{
-			// Special case for CLAP, since CLAP API requires plugin to load on main thread
-			it->loadInstrument(value, nullptr, true /*always DnD*/);
-		}
-		else
-		{
-			auto ilt = new InstrumentLoaderThread(this, it, value);
-			ilt->start();
-		}
-
+		auto ilt = new InstrumentLoaderThread(this, it, value);
+		ilt->start();
 		//it->toggledInstrumentTrackButton( true );
 		_de->accept();
 	}

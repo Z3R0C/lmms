@@ -33,7 +33,6 @@
 
 #include "JournallingObject.h"
 #include "RemotePlugin.h"
-#include "WindowEmbed.h"
 
 #include "vstbase_export.h"
 
@@ -122,7 +121,7 @@ public:
 	virtual void createUI(QWidget *parent);
 	bool eventFilter(QObject *obj, QEvent *event) override;
 
-	WindowEmbed::Method embedMethod() const;
+	QString embedMethod() const;
 
 public slots:
 	void setTempo( lmms::bpm_t _bpm );
@@ -153,7 +152,7 @@ private:
 	QPointer<QWidget> m_pluginWidget;
 	int m_pluginWindowID;
 	QSize m_pluginGeometry;
-	const WindowEmbed::Method m_embedMethod;
+	const QString m_embedMethod;
 
 	QString m_name;
 	int m_version;

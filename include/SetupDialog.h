@@ -33,7 +33,6 @@
 #include "lmmsconfig.h"
 #include "MidiClient.h"
 #include "MidiSetupWidget.h"
-#include "WindowEmbed.h"
 
 
 class QCheckBox;
@@ -168,8 +167,8 @@ private:
 	bool m_animateAFP;
 	QLabel * m_vstEmbedLbl;
 	QComboBox* m_vstEmbedComboBox;
-	WindowEmbed::Method m_vstEmbedMethod;
-	QCheckBox* m_vstAlwaysOnTopCheckBox;
+	QString m_vstEmbedMethod;
+	QCheckBox * m_vstAlwaysOnTopCheckBox;
 	bool m_vstAlwaysOnTop;
 	bool m_disableAutoQuit;
 

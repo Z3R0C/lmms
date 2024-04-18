@@ -32,8 +32,6 @@
 #include <QStringList>
 #include <QObject>
 
-#include "WindowEmbed.h"
-
 #include <vector>
 #include "lmms_export.h"
 
@@ -232,7 +230,9 @@ public:
 
 	QString defaultVersion() const;
 
-	WindowEmbed::Method vstEmbedMethod() const;
+
+	static QStringList availableVstEmbedMethods();
+	QString vstEmbedMethod() const;
 
 	// Returns true if the working dir (e.g. ~/lmms) exists on disk.
 	bool hasWorkingDir() const;
