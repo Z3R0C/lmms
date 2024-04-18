@@ -41,6 +41,7 @@
 #include "MixerView.h"
 #include "GuiApplication.h"
 #include "Instrument.h"
+#include "InstrumentTrack.h"
 #include "InstrumentTrackWindow.h"
 #include "MainWindow.h"
 #include "MidiClient.h"
@@ -395,6 +396,12 @@ QMenu * InstrumentTrackView::createMixerMenu(QString title, QString newMixerLabe
 
 	return mixerMenu;
 }
+
+QPixmap InstrumentTrackView::determinePixmap()
+{
+	return determinePixmap(dynamic_cast<InstrumentTrack*>(getTrack()));
+}
+
 
 QPixmap InstrumentTrackView::determinePixmap(InstrumentTrack* instrumentTrack)
 {
