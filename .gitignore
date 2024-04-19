@@ -11,5 +11,4 @@
 /plugins/ZynAddSubFx/zynaddsubfx/doc/gen/Makefile
 /data/locale/*.qm
 Brewfile.lock.json
-
 /debian/changelog
