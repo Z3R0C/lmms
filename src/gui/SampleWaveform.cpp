@@ -27,66 +27,67 @@
 namespace lmms::gui {
 
 void SampleWaveform::visualize(Parameters parameters, QPainter& painter, const QRect& rect)
-{	
-	const auto x = rect.x();
-	const auto height = rect.height();
-	const auto width = rect.width();
-	const auto centerY = rect.center().y();
+{
+	const int x = rect.x();
+	const int height = rect.height();
+	const int width = rect.width();
+	const int centerY = rect.center().y();
 
-	const auto halfHeight = height / 2;
+	const int halfHeight = height / 2;
 
-	const auto framesPerPixel = std::max<size_t>(1, parameters.size / width);
-
-	const auto numPixels = std::min<size_t>(parameters.size, width);
-
-	const auto scalingFactor = 
-		halfHeight * parameters.amplification 
-		/ static_cast<float>(parameters.buffer[0].size())
-	;
-
-	const auto maxFrames = numPixels * framesPerPixel;
-	
 	const auto color = painter.pen().color();
 	const auto rmsColor = color.lighter(123);
-	
+
+	const float framesPerPixel = std::max(1.0f, static_cast<float>(parameters.size) / width);
+
+	constexpr float maxFramesPerPixel = 512.0f;
+	const float resolution = std::max(1.0f, framesPerPixel / maxFramesPerPixel);
+	const float framesPerResolution = framesPerPixel / resolution;
+
+	const size_t numPixels = std::min<size_t>(parameters.size, width);
+	auto min = std::vector<float>(numPixels, 1);
+	auto max = std::vector<float>(numPixels, -1);
+	auto squared = std::vector<float>(numPixels, 0);
+
+	const size_t maxFrames = numPixels * static_cast<size_t>(framesPerPixel);
+
+	int pixelIndex = 0;
 	constexpr size_t maxFramesPerPixel = 24;
-	
-	const size_t frameStepSize = std::max<size_t>(framesPerPixel / maxFramesPerPixel, 1);
-	
-	for (size_t pixelIndex = 0; pixelIndex < numPixels; pixelIndex++) 
+	for (int i = 0; i < maxFrames; i += resolution)
 	{
-		const auto i = pixelIndex * maxFrames / numPixels;
-		size_t frameIndex = !parameters.reversed ? i : maxFrames - i;
-		const auto frameIndexBound = std::min(maxFrames, frameIndex + framesPerPixel);
-		
-		float max = -100.0;
-		float min =  100.0;
-		float squared = 0.0;
-		
-		while (frameIndex < frameIndexBound)
-		{
-			const auto& frame = parameters.buffer[frameIndex];
-			const auto value = std::accumulate(frame.begin(), frame.end(), 0.0f);
+		pixelIndex = i / framesPerPixel;
+		const int frameIndex = !parameters.reversed ? i : maxFrames - i;
 
-			if (max < value) max = value;
-			if (min > value) min = value;
-			
-			squared += value * value;
-			
-			frameIndex += frameStepSize;
-		}
+		const auto& frame = parameters.buffer[frameIndex];
+		const float value = std::accumulate(frame.begin(), frame.end(), 0.0f) / frame.size();
+
+		if (value > max[pixelIndex]) { max[pixelIndex] = value; }
+		if (value < min[pixelIndex]) { min[pixelIndex] = value; }
+
+		squared[pixelIndex] += value * value;
+	}
+	
+	while (pixelIndex < numPixels)
+	{
+		max[pixelIndex] = 0.0;
+		min[pixelIndex] = 0.0;
 		
-		const auto lineY1 = centerY - max * scalingFactor;
-		const auto lineY2 = centerY - min * scalingFactor;
-		const auto lineX = pixelIndex + x;
+		pixelIndex++;
+	}
+
+	for (int i = 0; i < numPixels; i++)
+	{
+		const int lineY1 = centerY - max[i] * halfHeight * parameters.amplification;
+		const int lineY2 = centerY - min[i] * halfHeight * parameters.amplification;
+		const int lineX = i + x;
 		painter.drawLine(lineX, lineY1, lineX, lineY2);
-		
-		const auto rms = std::sqrt(squared / maxFramesPerPixel);
-		const auto maxRMS = std::clamp(rms, min, max);
-		const auto minRMS = std::clamp(-rms, min, max);
 
-		const auto rmsLineY1 = centerY - maxRMS * scalingFactor;
-		const auto rmsLineY2 = centerY - minRMS * scalingFactor;
+		const float rms = std::sqrt(squared[i] / framesPerResolution);
+		const float maxRMS = std::clamp(rms, min[i], max[i]);
+		const float minRMS = std::clamp(-rms, min[i], max[i]);
+
+		const int rmsLineY1 = centerY - maxRMS * halfHeight * parameters.amplification;
+		const int rmsLineY2 = centerY - minRMS * halfHeight * parameters.amplification;
 
 		painter.setPen(rmsColor);
 		painter.drawLine(lineX, rmsLineY1, lineX, rmsLineY2);
