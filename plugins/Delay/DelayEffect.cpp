@@ -58,8 +58,8 @@ DelayEffect::DelayEffect( Model* parent, const Plugin::Descriptor::SubPluginFeat
 	m_delayControls( this )
 {
 	m_delay = 0;
-	m_delay = new StereoDelay( 20, Engine::audioEngine()->processingSampleRate() );
-	m_lfo = new Lfo( Engine::audioEngine()->processingSampleRate() );
+	m_delay = new StereoDelay( 20, Engine::audioEngine()->outputSampleRate() );
+	m_lfo = new Lfo( Engine::audioEngine()->outputSampleRate() );
 	m_outGain = 1.0;
 }
 
@@ -88,8 +88,8 @@ bool DelayEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames )
 		return( false );
 	}
 	double outSum = 0.0;
-	const float sr = Engine::audioEngine()->processingSampleRate();
-	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float sr = Engine::audioEngine()->outputSampleRate();
+	onst float d [2] = {dryLevelL(),dryLevelR()};
 	const float w [2] = {wetLevelL(),wetLevelR()};
 	auto dryS = std::array<sample_t, 2>{};
 	float lPeak = 0.0;
@@ -123,7 +123,7 @@ bool DelayEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames )
 
 		m_delay->setFeedback( *feedbackPtr );
 		m_lfo->setFrequency( *lfoTimePtr );
-		m_currentLength = static_cast<int>(*lengthPtr * Engine::audioEngine()->processingSampleRate());
+		m_currentLength = static_cast<int>(*lengthPtr * Engine::audioEngine()->outputSampleRate());
 		m_delay->setLength( m_currentLength + ( *amplitudePtr * ( float )m_lfo->tick() ) );
 		m_delay->tick( buf[f] );
 
@@ -151,8 +151,8 @@ bool DelayEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames )
 
 void DelayEffect::changeSampleRate()
 {
-	m_lfo->setSampleRate( Engine::audioEngine()->processingSampleRate() );
-	m_delay->setSampleRate( Engine::audioEngine()->processingSampleRate() );
+	m_lfo->setSampleRate( Engine::audioEngine()->outputSampleRate() );
+	m_delay->setSampleRate( Engine::audioEngine()->outputSampleRate() );
 }
 
 
