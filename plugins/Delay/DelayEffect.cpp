@@ -89,7 +89,7 @@ bool DelayEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames )
 	}
 	double outSum = 0.0;
 	const float sr = Engine::audioEngine()->outputSampleRate();
-	onst float d [2] = {dryLevelL(),dryLevelR()};
+	const float d [2] = {dryLevelL(),dryLevelR()};
 	const float w [2] = {wetLevelL(),wetLevelR()};
 	auto dryS = std::array<sample_t, 2>{};
 	float lPeak = 0.0;
