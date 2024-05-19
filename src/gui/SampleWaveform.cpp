@@ -52,8 +52,8 @@ void SampleWaveform::visualize(Parameters parameters, QPainter& painter, const Q
 	const size_t maxFrames = numPixels * static_cast<size_t>(framesPerPixel);
 
 	int pixelIndex = 0;
-	
-	for (int i = 0; i < maxFrames; i += resolution)
+
+	for (int i = 0; i < maxFrames; i += static_cast<int>(resolution))
 	{
 		pixelIndex = i / framesPerPixel;
 		const int frameIndex = !parameters.reversed ? i : maxFrames - i;
