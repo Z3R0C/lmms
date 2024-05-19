@@ -258,8 +258,8 @@ bool CompressorEffect::processAudioBuffer(sampleFrame* buf, const fpp_t frames)
 	}
 
 	float outSum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 
 	float lOutPeak = 0.0;
 	float rOutPeak = 0.0;
@@ -511,8 +511,8 @@ bool CompressorEffect::processAudioBuffer(sampleFrame* buf, const fpp_t frames)
 		// Calculate wet/dry value results
 		const float temp1 = delayedDrySignal[0];
 		const float temp2 = delayedDrySignal[1];
-		buf[f][0] = d * temp1 + w * s[0];
-		buf[f][1] = d * temp2 + w * s[1];
+		buf[f][0] = d[0] * temp1 + w[0] * s[0];
+		buf[f][1] = d[1] * temp2 + w[1] * s[1];
 		buf[f][0] = (1 - m_mixVal) * temp1 + m_mixVal * buf[f][0];
 		buf[f][1] = (1 - m_mixVal) * temp2 + m_mixVal * buf[f][1];
 

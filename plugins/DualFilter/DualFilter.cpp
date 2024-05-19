@@ -85,8 +85,8 @@ bool DualFilterEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames 
 	}
 
 	double outSum = 0.0;
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 
     if( m_dfControls.m_filter1Model.isValueChanged() || m_filter1changed )
 	{
@@ -199,8 +199,8 @@ bool DualFilterEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames 
 		}
 
 		// do another mix with dry signal
-		buf[f][0] = d * buf[f][0] + w * s[0];
-		buf[f][1] = d * buf[f][1] + w * s[1];
+		buf[f][0] = d[0] * buf[f][0] + w[0] * s[0];
+		buf[f][1] = d[1] * buf[f][1] + w[1] * s[1];
 		outSum += buf[f][0] * buf[f][0] + buf[f][1] * buf[f][1];
 
 		//increment pointers

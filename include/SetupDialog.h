@@ -105,6 +105,7 @@ private slots:
 	void updateBufferSizeWarning(int value);
 	void setBufferSize(int value);
 	void resetBufferSize();
+	void updateSampleRates();
 
 	// MIDI settings widget.
 	void midiInterfaceChanged(const QString & driver);
@@ -179,6 +180,7 @@ private:
 	AswMap m_audioIfaceSetupWidgets;
 	trMap m_audioIfaceNames;
 	bool m_NaNHandler;
+	QComboBox * m_sampleRate;
 	int m_bufferSize;
 	QSlider * m_bufferSizeSlider;
 	QLabel * m_bufferSizeLbl;
