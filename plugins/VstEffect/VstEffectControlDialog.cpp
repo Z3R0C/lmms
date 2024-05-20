@@ -22,20 +22,20 @@
  *
  */
 
-#include "VstEffectControlDialog.h"
-
-#include <QLabel>
 #include <QLayout>
 #include <QMenu>
 #include <QPushButton>
-#include <QToolBar>
 
-#include "embed.h"
-#include "gui_templates.h"
-#include "PixmapButton.h"
+#include "VstEffectControlDialog.h"
 #include "VstEffect.h"
 #include "VstPlugin.h"
 
+#include "PixmapButton.h"
+#include "embed.h"
+
+#include "gui_templates.h"
+#include <QToolBar>
+#include <QLabel>
 
 namespace lmms::gui
 {

@@ -264,8 +264,6 @@ void VstPlugin::loadSettings( const QDomElement & _this )
 		}
 		setParameterDump( dump );
 	}
-
-	portConfig().loadSettings(_this);
 }
 
 
@@ -309,7 +307,6 @@ void VstPlugin::saveSettings( QDomDocument & _doc, QDomElement & _this )
 	}
 
 	_this.setAttribute( "program", currentProgram() );
-	portConfig().saveSettings(_doc, _this);
 }
 
 void VstPlugin::toggleUI()

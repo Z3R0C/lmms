@@ -69,8 +69,8 @@ bool EqEffect::processAudioBuffer( sampleFrame *buf, const fpp_t frames )
 	const int sampleRate = Engine::audioEngine()->outputSampleRate();
 
 	//wet/dry controls
-	const float dry [2] = {dryLevelL(),dryLevelR()};
-	const float wet [2] = {wetLevelL(),wetLevelR()};
+	const float dry = dryLevel();
+	const float wet = wetLevel();
 	auto dryS = std::array<sample_t, 2>{};
 	// setup sample exact controls
 	float hpRes = m_eqControls.m_hpResModel.value();
@@ -257,8 +257,8 @@ bool EqEffect::processAudioBuffer( sampleFrame *buf, const fpp_t frames )
 		}
 
 		//apply wet / dry levels
-		buf[f][1] = ( dry[1] * dryS[1] ) + ( wet[1] * buf[f][1] );
-		buf[f][0] = ( dry[0] * dryS[0] ) + ( wet[0] * buf[f][0] );
+		buf[f][1] = ( dry * dryS[1] ) + ( wet * buf[f][1] );
+		buf[f][0] = ( dry * dryS[0] ) + ( wet * buf[f][0] );
 
 
 	}

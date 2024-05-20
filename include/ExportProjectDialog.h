@@ -41,8 +41,7 @@ class ExportProjectDialog : public QDialog, public Ui::ExportProjectDialog
 {
 	Q_OBJECT
 public:
-	ExportProjectDialog(const QString& exportLocation, bool exportTracks = false, Track* trackToBounce = nullptr,
-		QWidget* parent = nullptr);
+	ExportProjectDialog( const QString & _file_name, QWidget * _parent, bool multi_export );
 
 protected:
 	void reject() override;
@@ -58,10 +57,10 @@ private slots:
 	void onFileFormatChanged(int);
 
 private:
-	QString m_exportLocation;
-	QString m_exportExtension;
-	bool m_exportTracks = false;
-	Track* m_trackToBounce = nullptr;
+	QString m_fileName;
+	QString m_dirName;
+	QString m_fileExtension;
+	bool m_multiExport;
 
 	ProjectRenderer::ExportFileFormat m_ft;
 	std::unique_ptr<RenderManager> m_renderManager;

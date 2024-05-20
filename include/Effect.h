@@ -115,27 +115,6 @@ public:
 		return 1 + ( static_cast<int>( samples ) / Engine::audioEngine()->framesPerPeriod() );
 	}
 
-			inline float panAmount() const
-	{
-		return m_panModel.value();
-	}
-	inline float wetLevelL() const
-	{
-		return ( m_panModel.value() < 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( -m_panModel.value() + 100 ) / 100 ) );
-	}
-	inline float wetLevelR() const
-	{
-		return ( m_panModel.value() > 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( m_panModel.value() + 100 ) / 100 ) );
-	}
-	inline float dryLevelL() const
-	{
-		return 1.0f - ( ( m_panModel.value() < 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( -m_panModel.value() + 100 ) / 100 ) ) );
-	}
-	inline float dryLevelR() const
-	{
-		return 1.0f - ( ( m_panModel.value() > 0 ) ? m_wetDryModel.value() : ( m_wetDryModel.value() * ( ( m_panModel.value() + 100 ) / 100 ) ) );
-	}
-
 	inline float wetLevel() const
 	{
 		return m_wetDryModel.value();
@@ -248,7 +227,6 @@ private:
 
 	BoolModel m_enabledModel;
 	FloatModel m_wetDryModel;
-	FloatModel m_panModel;
 	FloatModel m_gateModel;
 	TempoSyncKnobModel m_autoQuitModel;
 	

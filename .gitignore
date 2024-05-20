@@ -1,5 +1,4 @@
 /build/
-/build01/
 /target/
 .*.sw?
 .DS_Store
@@ -11,4 +10,3 @@
 /plugins/ZynAddSubFx/zynaddsubfx/doc/gen/Makefile
 /data/locale/*.qm
 Brewfile.lock.json
-/debian/changelog

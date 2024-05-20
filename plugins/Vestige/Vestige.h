@@ -42,9 +42,7 @@ class QGridLayout;
 namespace lmms
 {
 
-class ComboBox;
 class FloatModel;
-class PluginPortConfig;
 class VstPlugin;
 
 namespace gui
@@ -75,8 +73,6 @@ public:
 	virtual bool handleMidiEvent( const MidiEvent& event, const TimePos& time, f_cnt_t offset = 0 );
 
 	virtual gui::PluginView* instantiateView( QWidget * _parent );
-
-	PluginPortConfig* portConfig();
 
 protected slots:
 	void setParameter( lmms::Model * action );
@@ -111,7 +107,7 @@ class ManageVestigeInstrumentView : public InstrumentViewFixedSize
 {
 	Q_OBJECT
 public:
-	ManageVestigeInstrumentView( VestigeInstrument * _instrument, QWidget * _parent, VestigeInstrument * _vi2 );
+	ManageVestigeInstrumentView( Instrument * _instrument, QWidget * _parent, VestigeInstrument * m_vi2 );
 	virtual ~ManageVestigeInstrumentView();
 
 
@@ -136,7 +132,7 @@ private:
 	QGridLayout * l;
 	QPushButton * m_syncButton;
 	QPushButton * m_displayAutomatedOnly;
-	ComboBox* m_portConfig;
+	QPushButton * m_closeButton;
 	CustomTextKnob ** vstKnobs;
 
 } ;
@@ -146,7 +142,7 @@ class VestigeInstrumentView : public InstrumentViewFixedSize
 {
 	Q_OBJECT
 public:
-	VestigeInstrumentView( VestigeInstrument * _instrument, QWidget * _parent );
+	VestigeInstrumentView( Instrument * _instrument, QWidget * _parent );
 	virtual ~VestigeInstrumentView() = default;
 
 
@@ -186,7 +182,7 @@ private:
 	PixmapButton * m_managePluginButton;
 	PixmapButton * m_savePresetButton;
 
-	VestigeInstrument* m_instrument2;
+	Instrument * _instrument2;
 	QWidget * _parent2;
 
 } ;

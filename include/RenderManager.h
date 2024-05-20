@@ -51,9 +51,6 @@ public:
 	/// Export all unmuted tracks into a single file
 	void renderProject();
 
-	//! Export `track` to an audio file.
-	void renderTrack(Track* track);
-
 	/// Export all unmuted tracks into individual file
 	void renderTracks();
 

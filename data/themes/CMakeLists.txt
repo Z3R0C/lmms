@@ -1,4 +1,4 @@
 INCLUDE(InstallHelpers)
 
-INSTALL_DATA_SUBDIRS("themes" "*.png;*.css;*.svg")
+INSTALL_DATA_SUBDIRS("themes" "*.png;*.css")
 

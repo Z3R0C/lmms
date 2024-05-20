@@ -61,7 +61,6 @@ private slots:
 	void recordingOn();
 	void recordingOff();
 	void clearTrack();
-	void bounceTrack();
 
 private:
 	TrackView * m_trackView;

@@ -30,7 +30,6 @@
 #include <QScrollArea>
 
 #include "embed.h"
-#include "ComboBox.h"
 #include "CustomTextKnob.h"
 #include "VstEffectControls.h"
 #include "VstEffectControlDialog.h"
@@ -164,13 +163,6 @@ gui::EffectControlDialog* VstEffectControls::createView()
 	return dialog;
 }
 
-
-
-PluginPortConfig* VstEffectControls::portConfig()
-{
-	if (!m_effect->m_plugin) { return nullptr; }
-	return &m_effect->m_plugin->portConfig();
-}
 
 
 
@@ -364,12 +356,13 @@ ManageVSTEffectView::ManageVSTEffectView( VstEffect * _eff, VstEffectControls * 
 
 	l->addWidget( m_displayAutomatedOnly, 0, 1, 1, 2, Qt::AlignLeft );
 
-	if (m_vi->portConfig()->hasMonoPort())
-	{
-		m_portConfig = m_vi->portConfig()->instantiateView(widget);
-		m_portConfig->setFixedSize(108, gui::ComboBox::DEFAULT_HEIGHT);
-		l->addWidget(m_portConfig, 0, 2, 1, 3, Qt::AlignLeft);
-	}
+
+	m_closeButton = new QPushButton( tr( "    Close    " ), widget );
+	connect( m_closeButton, SIGNAL( clicked() ), this,
+							SLOT( closeWindow() ) );
+
+	l->addWidget( m_closeButton, 0, 2, 1, 7, Qt::AlignLeft );
+
 
 	for( int i = 0; i < 10; i++ )
 	{
