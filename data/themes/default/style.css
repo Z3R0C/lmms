@@ -283,33 +283,33 @@ QScrollBar::add-page:vertical:pressed, QScrollBar::sub-page:vertical:pressed {
 /* scrollbar: handles (sliders) */
 
 QScrollBar::handle:horizontal {
-	background: #d1d8e4;
+	background: #5d6b77;
 	border: none;
 	border-radius: 4px;
 	min-width: 24px;
 }
 
 QScrollBar::handle:horizontal:hover {
-	background: #1de276;
+	background: #b8c4d1;
 }
 
 QScrollBar::handle:horizontal:pressed {
-	border: 2px solid #d1d8e4;
+	background: #ffffff;
 }
 
 QScrollBar::handle:vertical {
-	background: #d1d8e4;
+	background: #5d6b77;
 	border: none;
 	border-radius: 4px;
 	min-height: 24px;
 }
 
 QScrollBar::handle:vertical:hover {
-	background: #1de276;
+	background: #b8c4d1;
 }
 
 QScrollBar::handle:vertical:pressed {
-	border: 2px solid #d1d8e4;
+	background: #ffffff;
 }
 
 QScrollBar::handle:horizontal:disabled, QScrollBar::handle:vertical:disabled  {
