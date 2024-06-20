@@ -1,3 +1,0 @@
-INCLUDE(BuildPlugin)
-
-BUILD_PLUGIN(granularpitchshifter GranularPitchShifter.cpp GranularPitchShifterControls.cpp GranularPitchShifterControlDialog.cpp MOCFILES GranularPitchShifterControls.h GranularPitchShifterControlDialog.h EMBEDDED_RESOURCES *.png)
