@@ -64,8 +64,8 @@ bool GranularPitchShifterEffect::processAudioBuffer(sampleFrame* buf, const fpp_
 {
 	if (!isEnabled() || !isRunning()) { return false; }
 
-	const float d = dryLevel();
-	const float w = wetLevel();
+	const float d [2] = {dryLevelL(),dryLevelR()};
+	const float w [2] = {wetLevelL(),wetLevelR()};
 	
 	const ValueBuffer* pitchBuf = m_granularpitchshifterControls.m_pitchModel.valueBuffer();
 	const ValueBuffer* pitchSpreadBuf = m_granularpitchshifterControls.m_pitchSpreadModel.valueBuffer();
@@ -235,8 +235,8 @@ bool GranularPitchShifterEffect::processAudioBuffer(sampleFrame* buf, const fpp_
 		m_ringBuf[m_writePoint][0] = filtered[0] + s[0] * feedback;
 		m_ringBuf[m_writePoint][1] = filtered[1] + s[1] * feedback;
 			
-		buf[f][0] = d * buf[f][0] + w * s[0];
-		buf[f][1] = d * buf[f][1] + w * s[1];
+		buf[f][0] = d[0] * buf[f][0] + w[0] * s[0];
+		buf[f][1] = d[1] * buf[f][1] + w[1] * s[1];
 	}
 	
 	if (m_sampleRateNeedsUpdate)
