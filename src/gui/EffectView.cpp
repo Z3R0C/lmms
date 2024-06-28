@@ -40,7 +40,7 @@
 #include "MainWindow.h"
 #include "SubWindow.h"
 #include "TempoSyncKnob.h"
-
+#include "PixmapButton.h"
 
 namespace lmms::gui
 {
@@ -58,7 +58,7 @@ EffectView::EffectView( Effect * _model, QWidget * _parent ) :
 	// Disable effects that are of type "DummyEffect"
 	bool isEnabled = !dynamic_cast<DummyEffect *>( effect() );
 	m_bypass = new LedCheckBox( this, "", isEnabled ? LedCheckBox::LedColor::Green : LedCheckBox::LedColor::Red );
-	m_bypass->move( 3, 3 );
+	m_bypass->move( 2, 3 );
 	m_bypass->setEnabled( isEnabled );
 
 	m_bypass->setToolTip(tr("On/Off"));
@@ -66,21 +66,26 @@ EffectView::EffectView( Effect * _model, QWidget * _parent ) :
 
 	m_wetDry = new Knob( KnobType::Bright26, this );
 	m_wetDry->setLabel( tr( "W/D" ) );
-	m_wetDry->move( 40 - m_wetDry->width() / 2, 5 );
+	m_wetDry->move( 34 - m_wetDry->width() / 2, 5 );
 	m_wetDry->setEnabled( isEnabled );
 	m_wetDry->setHintText( tr( "Wet Level:" ), "" );
 
+	m_pan = new Knob( KnobType::Bright26, this );
+	m_pan->setLabel( tr( "PAN" ) );
+	m_pan->move( 65 - m_pan->width() / 2, 5 );
+	m_pan->setEnabled( isEnabled );
+	m_pan->setHintText( tr( "Panning:" ), "%" );
 
 	m_autoQuit = new TempoSyncKnob( KnobType::Bright26, this );
 	m_autoQuit->setLabel( tr( "DECAY" ) );
-	m_autoQuit->move( 78 - m_autoQuit->width() / 2, 5 );
+	m_autoQuit->move( 96 - m_autoQuit->width() / 2, 5 );
 	m_autoQuit->setEnabled( isEnabled && !effect()->m_autoQuitDisabled );
 	m_autoQuit->setHintText( tr( "Time:" ), "ms" );
 
 
 	m_gate = new Knob( KnobType::Bright26, this );
 	m_gate->setLabel( tr( "GATE" ) );
-	m_gate->move( 116 - m_gate->width() / 2, 5 );
+	m_gate->move( 127 - m_gate->width() / 2, 5 );
 	m_gate->setEnabled( isEnabled && !effect()->m_autoQuitDisabled );
 	m_gate->setHintText( tr( "Gate:" ), "" );
 
@@ -277,6 +282,7 @@ void EffectView::modelChanged()
 {
 	m_bypass->setModel( &effect()->m_enabledModel );
 	m_wetDry->setModel( &effect()->m_wetDryModel );
+	m_pan->setModel( &effect()->m_panModel );
 	m_autoQuit->setModel( &effect()->m_autoQuitModel );
 	m_gate->setModel( &effect()->m_gateModel );
 }
