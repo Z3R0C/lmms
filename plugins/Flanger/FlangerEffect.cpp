@@ -99,9 +99,9 @@ bool FlangerEffect::processAudioBuffer( sampleFrame *buf, const fpp_t frames )
 	double outSum = 0.0;
 	const float d [2] = {dryLevelL(),dryLevelR()};
 	const float w [2] = {wetLevelL(),wetLevelR()};
-	const float length = m_flangerControls.m_delayTimeModel.value() * Engine::audioEngine()->processingSampleRate();
+	const float length = m_flangerControls.m_delayTimeModel.value() * Engine::audioEngine()->outputSampleRate();
 	const float noise = m_flangerControls.m_whiteNoiseAmountModel.value();
-	float amplitude = m_flangerControls.m_lfoAmountModel.value() * Engine::audioEngine()->processingSampleRate();
+	float amplitude = m_flangerControls.m_lfoAmountModel.value() * Engine::audioEngine()->outputSampleRate();
 	bool invertFeedback = m_flangerControls.m_invertFeedbackModel.value();
 	m_lfo->setFrequency(  1.0/m_flangerControls.m_lfoFrequencyModel.value() );
 	m_lfo->setOffset( m_flangerControls.m_lfoPhaseModel.value() / 180 * D_PI );
